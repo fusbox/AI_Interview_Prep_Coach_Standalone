@@ -48,10 +48,10 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream, isRecording }
       for (let i = 0; i < bufferLength; i++) {
         barHeight = dataArray[i] / 2;
 
-        // Violet color palette (approx 124, 58, 237 for violet-600)
-        const r = 124;
-        const g = 58;
-        const b = 237; 
+        // Indigo color palette (indigo-600 is approx 79, 70, 229)
+        const r = 79;
+        const g = 70;
+        const b = 229; 
 
         ctx.fillStyle = `rgba(${r},${g},${b}, ${0.5 + (barHeight/200)})`;
 
@@ -80,7 +80,7 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream, isRecording }
       ref={canvasRef} 
       width={300} 
       height={100} 
-      className="w-full h-32 rounded-xl bg-violet-50/50"
+      className="w-full h-32 rounded-xl bg-indigo-50/50"
     />
   );
 };
