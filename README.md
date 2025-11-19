@@ -48,9 +48,12 @@ Built with **React** and powered by **Google's Gemini 2.5 Flash**, this applicat
     ```
 
 3.  **Configure Environment Variables**
-    Create a `.env.local` file in the root directory and add your API key:
+    Create a `.env.local` file in the root directory and add your API keys:
     ```env
-    GEMINI_API_KEY=your_actual_api_key_here
+    VITE_GEMINI_API_KEY=your_gemini_api_key_here
+    # Optional for natural voice narration (serverless TTS)
+    ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
+    ELEVENLABS_VOICE_ID=optional_voice_id_override
     ```
 
 4.  **Run the Development Server**
@@ -66,6 +69,18 @@ Built with **React** and powered by **Google's Gemini 2.5 Flash**, this applicat
 3.  **Review Feedback:** Immediately after answering, view your transcript and get specific AI coaching tips.
 4.  **Iterate:** Choose to "Retry" the question to apply the feedback immediately, or move to the next one.
 5.  **View Summary:** After completing the session, review your "Readiness Score" and a holistic breakdown of your performance.
+
+### 🔊 Natural Voice Narration (Non-Browser TTS)
+
+The app can narrate questions using a high-quality neural voice via a serverless function (not the built‑in browser `speechSynthesis`).
+
+1. Set `ELEVENLABS_API_KEY` (and optionally `ELEVENLABS_VOICE_ID`) in your Vercel project Environment Variables. For local dev also add them to `.env.local`.
+2. Deploy (or run locally) – the serverless function at `/api/tts` will proxy secure TTS requests.
+3. Click "Play Voice" on a question to fetch and stream the synthesized audio.
+
+If no TTS env vars are set, the narration button will show a loading state then do nothing.
+
+You can swap providers later (e.g. OpenAI, Azure, Google Cloud TTS) by editing `api/tts.ts` and adjusting headers/payload.
 
 ## 📂 Project Structure
 
