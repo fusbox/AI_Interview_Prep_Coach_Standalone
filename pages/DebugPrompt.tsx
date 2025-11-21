@@ -60,31 +60,43 @@ const DebugPrompt: React.FC = () => {
 
     return (
         <div className="h-screen overflow-y-auto bg-slate-50 p-8">
-            <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 relative">
-                <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 p-8 flex justify-between items-center shadow-sm transition-all">
-                    <h1 className="text-2xl font-bold text-slate-800">Prompt Engineering Debugger</h1>
-                    {result && (
-                        <button
-                            onClick={handleDownload}
-                            className="flex items-center gap-2 bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
-                        >
-                            Download JSON 📥
-                        </button>
-                    )}
-                </div>
+            <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 relative">
+                <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 p-6 shadow-sm transition-all">
+                    <div className="flex justify-between items-center mb-4">
+                        <h1 className="text-2xl font-bold text-slate-800">Prompt Engineering Debugger</h1>
+                        {result && (
+                            <button
+                                onClick={handleDownload}
+                                className="flex items-center gap-2 bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shadow-sm"
+                            >
+                                Download JSON 📥
+                            </button>
+                        )}
+                    </div>
 
-                <div className="p-8 pt-6">
-                    <div className="grid gap-6 mb-8">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
+                    <div className="flex gap-4 items-end">
+                        <div className="flex-1">
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Role</label>
                             <input
                                 type="text"
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
-                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                placeholder="e.g. Cashier"
                             />
                         </div>
+                        <button
+                            onClick={handleTest}
+                            disabled={loading}
+                            className="bg-indigo-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors text-sm h-[38px]"
+                        >
+                            {loading ? 'Generating...' : 'Test Generation'}
+                        </button>
+                    </div>
+                </div>
 
+                <div className="p-8 pt-6">
+                    <div className="grid gap-6 mb-8">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Job Description (Optional)</label>
                             <textarea
@@ -94,14 +106,6 @@ const DebugPrompt: React.FC = () => {
                                 placeholder="Paste JD here..."
                             />
                         </div>
-
-                        <button
-                            onClick={handleTest}
-                            disabled={loading}
-                            className="bg-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                        >
-                            {loading ? 'Generating...' : 'Test Generation'}
-                        </button>
                     </div>
 
                     {error && (
