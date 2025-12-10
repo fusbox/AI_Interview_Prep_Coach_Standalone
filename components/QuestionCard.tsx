@@ -6,9 +6,10 @@ interface QuestionCardProps {
   role: string;
   currentIndex: number;
   total: number;
+  hideHeader?: boolean;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ question, role, currentIndex, total }) => {
+const QuestionCard: React.FC<QuestionCardProps> = ({ question, role, currentIndex, total, hideHeader }) => {
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isLoadingAudio, setIsLoadingAudio] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -94,12 +95,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, role, currentInde
 
   return (
     <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-lg shadow-indigo-100/50 border border-slate-100 mb-8">
-      <div className="flex items-center space-x-2 mb-4">
-        <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md uppercase tracking-wider border border-indigo-100">
-          {role}
-        </span>
-        <span className="text-slate-400 text-sm font-medium">Question {currentIndex + 1} of {total}</span>
-      </div>
+      {!hideHeader && (
+        <div className="flex items-center space-x-2 mb-4">
+          <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-md uppercase tracking-wider border border-indigo-100">
+            {role}
+          </span>
+          <span className="text-slate-400 text-sm font-medium">Question {currentIndex + 1} of {total}</span>
+        </div>
+      )}
       <h2 className="text-2xl md:text-3xl font-semibold text-slate-800 leading-snug mb-4">
         {question}
       </h2>

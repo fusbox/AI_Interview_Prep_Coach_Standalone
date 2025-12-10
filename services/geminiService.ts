@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Question, AnalysisResult } from "../types";
+import { Question, AnalysisResult, QuestionTips } from "../types";
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -69,6 +69,67 @@ export const generateQuestions = async (role: string, jobDescription?: string): 
   } catch (error) {
     console.error("Error generating questions:", error);
     return mockQuestions(role);
+  }
+};
+
+export const generateQuestionTips = async (question: string, role: string): Promise<QuestionTips> => {
+  if (!apiKey) return mockTips(role);
+
+  const prompt = `
+    You are an expert interview coach for ${role} roles.
+    Provide detailed interview tips for the following question: "${question}"
+
+    Return strictly JSON matching this structure:
+    {
+       lookingFor: "What the interviewer is trying to assess",
+       pointsToCover: ["Point 1", "Point 2", "Point 3"],
+       answerFramework: "Recommended structure (e.g. STAR, Past-Present-Future)",
+       industrySpecifics: { metrics: "Key KPIs to mention", tools: "Relevant software/tools" },
+       mistakesToAvoid: ["Mistake 1", "Mistake 2", "Mistake 3"],
+       proTip: "One advanced insight or unique tip"
+    }
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            lookingFor: { type: Type.STRING },
+            pointsToCover: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            answerFramework: { type: Type.STRING },
+            industrySpecifics: {
+              type: Type.OBJECT,
+              properties: {
+                metrics: { type: Type.STRING },
+                tools: { type: Type.STRING }
+              }
+            },
+            mistakesToAvoid: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            proTip: { type: Type.STRING }
+          },
+          required: ["lookingFor", "pointsToCover", "answerFramework", "industrySpecifics", "mistakesToAvoid", "proTip"]
+        },
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("No text returned from Gemini for tips");
+    return JSON.parse(text) as QuestionTips;
+
+  } catch (error) {
+    console.error("Error generating tips:", error);
+    return mockTips(role);
   }
 };
 
@@ -208,6 +269,18 @@ const mockQuestions = (role: string): Question[] => [
   { id: '2', text: `Why are you interested in a career in ${role}?` },
   { id: '3', text: "Describe a successful project you worked on." },
 ];
+
+const mockTips = (role: string): QuestionTips => ({
+  lookingFor: "The interviewer wants to see your problem-solving process and resilience.",
+  pointsToCover: ["The specific situation", "The action you took", "The positive result"],
+  answerFramework: "Use the STAR method (Situation, Task, Action, Result) to structure your response.",
+  industrySpecifics: {
+    metrics: "Efficiency improvement, cost reduction",
+    tools: "Jira, Trello, Slack"
+  },
+  mistakesToAvoid: ["Blaming others", "Being vague about your contribution", "Focusing too much on the problem instead of the solution"],
+  proTip: "Turn the challenge into a learning opportunity."
+});
 
 const mockAnalysis = (): AnalysisResult => ({
   transcript: "This is a simulated transcript because the API call failed or no key was provided. I talked about my experience with leading teams and solving complex data problems.",

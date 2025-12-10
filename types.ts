@@ -6,9 +6,22 @@ export enum AppScreen {
   SUMMARY = 'SUMMARY',
 }
 
+export interface QuestionTips {
+  lookingFor: string;
+  pointsToCover: string[];
+  answerFramework: string;
+  industrySpecifics: {
+    metrics: string;
+    tools: string;
+  };
+  mistakesToAvoid: string[];
+  proTip: string;
+}
+
 export interface Question {
   id: string;
   text: string;
+  tips?: QuestionTips;
 }
 
 export interface AnalysisResult {
