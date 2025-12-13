@@ -1,0 +1,20 @@
+export const ROLE_IMAGES: Record<string, string> = {
+    "Software Engineer": "/sw_eng.png",
+    "Product Manager": "/pm.png",
+    "Data Analyst": "/data_analyst.png",
+    "UX Designer": "/ux_designer.png",
+    "Digital Marketer": "/digital_marketer.png",
+    "IT Support Specialist": "/it_support.png",
+    "Cybersecurity Analyst": "/cybersec_analyst.png",
+    "DevOps Engineer": "/devops_eng.png",
+    "QA Engineer": "/qa_eng.png",
+    "Retail Sales Associate": "/retail_assoc.png",
+    "Cashier": "/cashier.png",
+    "Home Health Aide": "/home_health_aide.png",
+    "Warehouse Associate": "/warehouse_assoc.png",
+    "Food Preparation Worker": "/food_prep.png",
+    "Customer Service Rep": "/csr.png",
+    "Stock Clerk": "/stock_clerk.png",
+    "Janitor / Custodian": "/custodian.png",
+    "Packer / Packager": "/packer.png"
+};

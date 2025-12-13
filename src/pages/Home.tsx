@@ -4,10 +4,20 @@ import { Briefcase } from '../components/Icons';
 import { useGuestTracker } from '../hooks/useGuestTracker';
 import { useAuth } from '../context/AuthContext';
 
+import { ROLE_IMAGES } from '../constants';
+
 const Home: React.FC = () => {
     const navigate = useNavigate();
     const { hasCompletedSession } = useGuestTracker();
     const { user } = useAuth();
+
+    // Preload images for RoleSelection page
+    useEffect(() => {
+        Object.values(ROLE_IMAGES).forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
+    }, []);
 
     const handleStart = () => {
         // If user is guest AND has already done a session -> force auth
