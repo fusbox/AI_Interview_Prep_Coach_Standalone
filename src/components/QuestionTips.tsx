@@ -15,21 +15,64 @@ const QuestionTips: React.FC<QuestionTipsProps> = ({ tips }) => {
         setExpandedSection(expandedSection === section ? null : section);
     };
 
-    const SectionHeader = ({ id, icon: Icon, title, color }: { id: string; icon: any; title: string; color: string }) => (
-        <button
-            onClick={() => toggleSection(id)}
-            className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${expandedSection === id ? `bg-${color}-50 ring-2 ring-${color}-100` : 'bg-white hover:bg-slate-50 border border-slate-100'
-                } mb-2`}
-        >
-            <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-${color}-100 text-${color}-600`}>
-                    <Icon size={20} />
+    const colorVariants: Record<string, { activeBg: string; ring: string; iconBg: string; iconText: string; }> = {
+        indigo: {
+            activeBg: 'bg-indigo-50',
+            ring: 'ring-indigo-100',
+            iconBg: 'bg-indigo-100',
+            iconText: 'text-indigo-600'
+        },
+        emerald: {
+            activeBg: 'bg-emerald-50',
+            ring: 'ring-emerald-100',
+            iconBg: 'bg-emerald-100',
+            iconText: 'text-emerald-600'
+        },
+        violet: {
+            activeBg: 'bg-violet-50',
+            ring: 'ring-violet-100',
+            iconBg: 'bg-violet-100',
+            iconText: 'text-violet-600'
+        },
+        blue: {
+            activeBg: 'bg-blue-50',
+            ring: 'ring-blue-100',
+            iconBg: 'bg-blue-100',
+            iconText: 'text-blue-600'
+        },
+        rose: {
+            activeBg: 'bg-rose-50',
+            ring: 'ring-rose-100',
+            iconBg: 'bg-rose-100',
+            iconText: 'text-rose-600'
+        },
+        amber: {
+            activeBg: 'bg-amber-50',
+            ring: 'ring-amber-100',
+            iconBg: 'bg-amber-100',
+            iconText: 'text-amber-600'
+        }
+    };
+
+    const SectionHeader = ({ id, icon: Icon, title, color }: { id: string; icon: any; title: string; color: string }) => {
+        const styles = colorVariants[color] || colorVariants.indigo;
+
+        return (
+            <button
+                onClick={() => toggleSection(id)}
+                className={`w-full flex items-center justify-between p-4 rounded-xl transition-all ${expandedSection === id ? `${styles.activeBg} ring-2 ${styles.ring}` : 'bg-white hover:bg-slate-50 border border-slate-100'
+                    } mb-2`}
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${styles.iconBg} ${styles.iconText}`}>
+                        <Icon size={20} />
+                    </div>
+                    <span className="font-semibold text-slate-700">{title}</span>
                 </div>
-                <span className="font-semibold text-slate-700">{title}</span>
-            </div>
-            {expandedSection === id ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-        </button>
-    );
+                {expandedSection === id ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+            </button>
+        );
+    };
 
     return (
         <div className="w-full animate-fade-in-up h-full">
