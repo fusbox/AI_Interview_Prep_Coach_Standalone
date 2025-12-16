@@ -231,7 +231,8 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
     });
 
     if (!response.ok) {
-      throw new Error(`Server error: ${response.statusText}`);
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || `Server error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();

@@ -88,7 +88,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, role, currentInde
       }
     } catch (e) {
       console.error("Playback error:", e);
-      setAudioError('Playback failed. Try again.');
+      setAudioError(typeof e === 'object' && e && 'message' in e ? (e as any).message : 'Playback failed.');
     } finally {
       setIsLoadingAudio(false);
     }

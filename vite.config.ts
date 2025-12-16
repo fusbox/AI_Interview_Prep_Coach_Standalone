@@ -64,7 +64,14 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
-  process.env.GEMINI_API_KEY = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY;
+
+  const key = process.env.GEMINI_API_KEY;
+  if (key) {
+    console.log(`[Vite Config] GEMINI_API_KEY loaded. Length: ${key.length}, Starts with: ${key.substring(0, 5)}...`);
+  } else {
+    console.warn("[Vite Config] GEMINI_API_KEY could not be found in env!");
+  }
 
   return {
     server: {
