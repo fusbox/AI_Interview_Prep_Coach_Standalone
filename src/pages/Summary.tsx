@@ -18,6 +18,12 @@ const Summary: React.FC = () => {
     const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
     const hasSaved = useRef(false);
 
+    const decodeHtml = (html: string) => {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    };
+
     const calculateOverallScore = () => {
         const totalQs = session.questions.length;
         if (totalQs === 0) return 0;
@@ -87,13 +93,13 @@ const Summary: React.FC = () => {
                             <p className="text-lg text-slate-500 mt-2">Personalized insights for <span className="font-semibold text-indigo-600">{session.role}</span></p>
                         </div>
                         <div className="flex gap-3">
-                            <Button onClick={handleExit} variant="outline" className="gap-2">
-                                <Home size={16} /> Home
-                            </Button>
+                            <button onClick={handleExit} className="text-slate-500 hover:text-slate-900 font-medium flex items-center gap-2 transition-colors px-4 py-2 rounded-lg hover:bg-white/50">
+                                <Home size={18} /> Home
+                            </button>
                             {user ? (
-                                <Button onClick={handleNewSession} className="bg-slate-900 text-white hover:bg-slate-800 gap-2 shadow-lg shadow-slate-200">
-                                    <RotateCcw size={16} /> New Session
-                                </Button>
+                                <button onClick={handleNewSession} className="text-slate-500 hover:text-indigo-600 font-medium flex items-center gap-2 transition-colors px-4 py-2 rounded-lg hover:bg-white/50">
+                                    <RotateCcw size={18} /> New Session
+                                </button>
                             ) : (
                                 <Button onClick={handleSignup} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shadow-lg shadow-indigo-200">
                                     Sign Up to Save <ChevronRight size={16} />
@@ -243,7 +249,7 @@ const Summary: React.FC = () => {
                                                         <h5 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Your Response</h5>
                                                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-slate-600 text-base leading-relaxed italic relative">
                                                             <span className="absolute top-4 left-4 text-4xl text-slate-100 font-serif leading-none">"</span>
-                                                            <p className="relative z-10">{ans.analysis.transcript}</p>
+                                                            <p className="relative z-10">{decodeHtml(ans.analysis.transcript)}</p>
                                                         </div>
                                                         <div className="flex flex-wrap gap-2 mt-4">
                                                             {ans.analysis.keyTerms.map((term, idx) => (

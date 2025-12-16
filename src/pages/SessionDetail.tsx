@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, ChevronUp, Calendar, Award, User, MessageSquare, Activity, Lightbulb } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Award, User, MessageSquare, Activity, Lightbulb, CheckCircle2 } from 'lucide-react';
 import { fetchSessionById, SessionHistory } from '../services/storageService';
 import Loader from '../components/Loader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { cn } from '../lib/utils';
 
 const SessionDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -28,21 +30,31 @@ const SessionDetail: React.FC = () => {
         loadSession();
     }, [id]);
 
+    const decodeHtml = (html: string) => {
+        const txt = document.createElement('textarea');
+        txt.innerHTML = html;
+        return txt.value;
+    };
+
     const toggleQuestion = (questionId: string) => {
-        // If expanding a new question (not just collapsing the current one)
         if (expandedQuestionId !== questionId) {
             setExpandedQuestionId(questionId);
-
-            // Wait for render/transition to tick, then smooth scroll
             setTimeout(() => {
                 const element = document.getElementById(`question-${questionId}`);
                 if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 350); // Slightly longer than transition duration (300ms)
+            }, 350);
         } else {
-            // Collapsing current
             setExpandedQuestionId(null);
+        }
+    };
+
+    const getRatingColor = (rating?: string) => {
+        switch (rating) {
+            case 'Strong': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'Good': return 'bg-teal-100 text-teal-700 border-teal-200';
+            default: return 'bg-amber-100 text-amber-700 border-amber-200';
         }
     };
 
@@ -120,103 +132,105 @@ const SessionDetail: React.FC = () => {
                             if (!answerData) return null;
 
                             return (
-                                <div
-                                    key={question.id}
-                                    id={`question-${question.id}`}
-                                    className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200"
-                                >
-                                    {/* Question Header (Toggle Trigger) */}
+                                <Card key={question.id} id={`question-${question.id}`} className={cn("border-slate-200 transition-all duration-300", isExpanded ? "shadow-md ring-1 ring-indigo-50 border-indigo-200" : "hover:border-indigo-200")}>
                                     <div
                                         onClick={() => toggleQuestion(question.id)}
-                                        className={`p-6 flex items-start gap-4 cursor-pointer hover:bg-slate-50 transition-colors ${isExpanded ? 'bg-slate-50 border-b border-slate-200' : ''}`}
+                                        className="w-full flex flex-col md:flex-row md:items-center justify-between p-6 cursor-pointer gap-4"
                                     >
-                                        <div className={`w-8 h-8 flex-shrink-0 rounded-lg flex items-center justify-center font-bold transition-colors ${isExpanded ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
-                                            {index + 1}
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className={`text-lg font-semibold transition-colors ${isExpanded ? 'text-indigo-900' : 'text-slate-700'}`}>
-                                                {question.text}
-                                            </h3>
-                                        </div>
-                                        <div className="mt-1 text-slate-400">
-                                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                        </div>
-                                    </div>
-
-                                    {/* Expandable Content Wrapper */}
-                                    <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                                        <div className="overflow-hidden">
-                                            <div className="p-6 sm:p-8 space-y-8 border-t border-slate-100">
-                                                {/* User Answer */}
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-400 uppercase tracking-wider">
-                                                        <User size={16} /> Your Answer
-                                                    </div>
-                                                    <div className="bg-slate-50 p-4 rounded-xl text-slate-700 leading-relaxed border border-slate-100 italic">
-                                                        "{analysis?.transcript || answerData.text || "No transcript available."}"
-                                                    </div>
-                                                </div>
-
-                                                {/* AI Analysis */}
-                                                {analysis && (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                        {/* Feedback */}
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-3 text-sm font-bold text-indigo-500 uppercase tracking-wider">
-                                                                <MessageSquare size={16} /> Feedback
-                                                            </div>
-                                                            <ul className="space-y-3">
-                                                                {analysis.feedback.map((point, i) => (
-                                                                    <li key={i} className="flex items-start gap-3 text-slate-600 text-sm">
-                                                                        <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full mt-1.5 flex-shrink-0" />
-                                                                        {point}
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-
-                                                        {/* Delivery & Terms */}
-                                                        <div className="space-y-6">
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-3 text-sm font-bold text-emerald-600 uppercase tracking-wider">
-                                                                    <Activity size={16} /> Rating: {analysis.rating}
-                                                                </div>
-                                                                {analysis.deliveryStatus && (
-                                                                    <div className="mb-4 text-sm text-slate-600">
-                                                                        <span className="font-medium text-slate-900">Delivery:</span> {analysis.deliveryStatus}
-                                                                    </div>
-                                                                )}
-                                                                {analysis.deliveryTips && analysis.deliveryTips.length > 0 && (
-                                                                    <div className="space-y-2">
-                                                                        {analysis.deliveryTips.map((tip, i) => (
-                                                                            <div key={i} className="flex items-start gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded lg">
-                                                                                <Lightbulb size={12} className="mt-0.5 text-amber-500 flex-shrink-0" />
-                                                                                {tip}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-2 text-sm font-bold text-slate-400 uppercase tracking-wider">
-                                                                    Key Terms
-                                                                </div>
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {analysis.keyTerms.map((term, i) => (
-                                                                        <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-md border border-slate-200">
-                                                                            {term}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                        <div className="flex items-start gap-4 flex-1">
+                                            <div className={cn("shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mt-0.5",
+                                                analysis?.rating === 'Strong' ? 'bg-emerald-100 text-emerald-700' :
+                                                    analysis?.rating === 'Good' ? 'bg-teal-100 text-teal-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                            )}>
+                                                {index + 1}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-slate-800 text-lg leading-snug">{question.text}</h4>
+                                                {!isExpanded && <p className="text-sm text-slate-400 mt-2 font-medium">Click to view full analysis</p>}
                                             </div>
                                         </div>
+
+                                        <div className="flex items-center justify-between md:justify-end gap-6 pl-12 md:pl-0">
+                                            <span className={cn("px-4 py-1.5 rounded-full text-xs font-bold uppercase border tracking-wider", getRatingColor(analysis?.rating))}>
+                                                {analysis?.rating || "Skipped"}
+                                            </span>
+                                            <ChevronRight className={cn("text-slate-400 transition-transform duration-300", isExpanded && "rotate-90")} size={20} />
+                                        </div>
                                     </div>
-                                </div>
+
+                                    {isExpanded && (
+                                        <div className="px-6 pb-8 pt-2 border-t border-slate-50 animate-fade-in bg-slate-50/30">
+                                            {/* User Answer */}
+                                            <div className="mb-8">
+                                                <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-400 uppercase tracking-wider">
+                                                    <User size={16} /> Your Answer
+                                                </div>
+                                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-slate-600 text-base leading-relaxed italic relative">
+                                                    <span className="absolute top-4 left-4 text-4xl text-slate-100 font-serif leading-none">"</span>
+                                                    <p className="relative z-10">{decodeHtml(analysis?.transcript || answerData.text || "No transcript available.")}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* AI Analysis */}
+                                            {analysis && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                    {/* Feedback */}
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-3 text-sm font-bold text-indigo-500 uppercase tracking-wider">
+                                                            <MessageSquare size={16} /> Feedback
+                                                        </div>
+                                                        <ul className="space-y-3">
+                                                            {analysis.feedback.map((point, i) => (
+                                                                <li key={i} className="flex items-start gap-3 text-slate-600 text-sm bg-white p-4 rounded-xl border border-slate-100">
+                                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                                                    <span className="leading-snug">{point}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+
+                                                    {/* Delivery & Terms */}
+                                                    <div className="space-y-6">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-3 text-sm font-bold text-emerald-600 uppercase tracking-wider">
+                                                                <Activity size={16} /> Rating: {analysis.rating}
+                                                            </div>
+                                                            {analysis.deliveryStatus && (
+                                                                <div className="mb-4 text-sm text-slate-600">
+                                                                    <span className="font-medium text-slate-900">Delivery:</span> {analysis.deliveryStatus}
+                                                                </div>
+                                                            )}
+                                                            {analysis.deliveryTips && analysis.deliveryTips.length > 0 && (
+                                                                <div className="space-y-2">
+                                                                    {analysis.deliveryTips.map((tip, i) => (
+                                                                        <div key={i} className="flex items-start gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded lg">
+                                                                            <Lightbulb size={12} className="mt-0.5 text-amber-500 shrink-0" />
+                                                                            {tip}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-2 text-sm font-bold text-slate-400 uppercase tracking-wider">
+                                                                Key Terms
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {analysis.keyTerms.map((term, i) => (
+                                                                    <span key={i} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-medium border border-indigo-100">
+                                                                        {term}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </Card>
                             );
                         })}
                     </div>
