@@ -24,6 +24,20 @@ const Summary: React.FC = () => {
         return txt.value;
     };
 
+    const toggleQuestion = (questionId: string) => {
+        if (expandedQuestionId !== questionId) {
+            setExpandedQuestionId(questionId);
+            setTimeout(() => {
+                const element = document.getElementById(`question-${questionId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 350);
+        } else {
+            setExpandedQuestionId(null);
+        }
+    };
+
     const calculateOverallScore = () => {
         const totalQs = session.questions.length;
         if (totalQs === 0) return 0;
@@ -214,9 +228,9 @@ const Summary: React.FC = () => {
                                 const isExpanded = expandedQuestionId === q.id;
 
                                 return (
-                                    <Card key={q.id} className={cn("border-slate-200 transition-all duration-300", isExpanded ? "shadow-md ring-1 ring-indigo-50 border-indigo-200" : "hover:border-indigo-200")}>
+                                    <Card key={q.id} id={`question-${q.id}`} className={cn("border-slate-200 transition-all duration-300", isExpanded ? "shadow-md ring-1 ring-indigo-50 border-indigo-200" : "hover:border-indigo-200")}>
                                         <div
-                                            onClick={() => setExpandedQuestionId(isExpanded ? null : q.id)}
+                                            onClick={() => toggleQuestion(q.id)}
                                             className="w-full flex flex-col md:flex-row md:items-center justify-between p-6 cursor-pointer gap-4"
                                         >
                                             <div className="flex items-start gap-4 flex-1">
