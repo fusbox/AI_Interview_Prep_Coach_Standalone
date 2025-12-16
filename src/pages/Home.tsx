@@ -50,7 +50,7 @@ const Home: React.FC = () => {
                         onClick={handleStart}
                         className="px-10 py-4 bg-[#376497] border-2 border-transparent hover:bg-transparent hover:text-[#0B8039] hover:border-[#0B8039] text-white font-semibold rounded-lg shadow-lg shadow-blue-900/10 transition-all hover:-translate-y-1"
                     >
-                        {(!user && hasCompletedSession) ? "Create Account to Continue" : "Start Practicing"}
+                        {(!user && hasCompletedSession) ? "Sign Up or Login" : "Start Practicing"}
                     </button>
                     {user && (
                         <button
