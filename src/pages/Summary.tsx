@@ -116,7 +116,7 @@ const Summary: React.FC = () => {
                                 </button>
                             ) : (
                                 <Button onClick={handleSignup} className="bg-[#376497] hover:bg-[#25466c] text-white gap-2 shadow-lg shadow-blue-200">
-                                    Sign Up to Save <ChevronRight size={16} />
+                                    Create Account <ChevronRight size={16} />
                                 </Button>
                             )}
                         </div>
@@ -128,10 +128,10 @@ const Summary: React.FC = () => {
                             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                                 <div>
                                     <h3 className="text-2xl font-bold mb-3 font-display">Keep your momentum going.</h3>
-                                    <p className="text-blue-100 text-lg max-w-xl leading-relaxed">Create a free account to unlock your personal dashboard, track your improvement over time, and access deeper AI coaching insights.</p>
+                                    <p className="text-blue-100 text-lg max-w-xl leading-relaxed">Create an account to unlock your personal dashboard, track your improvement over time, and access deeper AI coaching insights.</p>
                                 </div>
                                 <Button onClick={handleSignup} size="lg" className="bg-white text-[#376497] hover:bg-blue-50 font-bold shadow-xl border-none">
-                                    Create Free Account
+                                    Create Account
                                 </Button>
                             </div>
                             <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-1/4 -translate-y-1/4 pointer-events-none">
