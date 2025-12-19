@@ -18,6 +18,7 @@ const JobDescriptionInput: React.FC = () => {
     const [jobDescription, setJobDescription] = useState('');
     const [role, setRole] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Redirect hooked guests to signup
     React.useEffect(() => {
@@ -37,7 +38,8 @@ const JobDescriptionInput: React.FC = () => {
             await startSession(sanitizedRole, sanitizedJD);
             navigate('/interview');
         } catch (error) {
-            alert("Failed to generate questions. Please try again.");
+            setError("Failed to generate questions. Please try again.");
+            setTimeout(() => setError(null), 3000);
         } finally {
             setIsProcessing(false);
         }
@@ -59,6 +61,12 @@ const JobDescriptionInput: React.FC = () => {
                     <div className="bg-blue-50/50 rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
                         <h2 className="text-3xl font-bold mb-2 text-slate-800">Custom Job Interview</h2>
                         <p className="text-slate-500 mb-8">Paste a job description to generate tailored interview questions.</p>
+
+                        {error && (
+                            <div className="mb-6 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-sm rounded-lg flex items-center justify-center">
+                                {error}
+                            </div>
+                        )}
 
                         {isProcessing ? (
                             <div className="flex flex-col items-center justify-center h-64">

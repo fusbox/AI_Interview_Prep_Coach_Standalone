@@ -8,7 +8,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
     console.error("Missing Supabase environment variables! Check your .env file.");
 } else {
-    console.log("Supabase Client Initialized");
+
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');

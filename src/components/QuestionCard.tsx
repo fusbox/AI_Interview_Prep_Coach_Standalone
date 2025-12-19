@@ -44,7 +44,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, role, currentInde
           }
         }
       } catch (error) {
-        console.log('Prefetch failed, will load on demand');
+
       }
     }, 300);
 

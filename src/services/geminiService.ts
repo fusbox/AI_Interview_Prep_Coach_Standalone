@@ -221,7 +221,7 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
   if (!text.trim()) return null;
 
   try {
-    console.log("Fetching speech from server for:", text.substring(0, 15) + "...");
+
 
     // Call your own serverless function
     const response = await fetch('/api/tts', {
@@ -250,11 +250,11 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
     }
 
     const mimeType = data.mimeType || 'audio/mpeg';
-    console.log(`[Client] Received TTS Audio. MimeType: ${mimeType}, Length: ${len} bytes`);
+
 
     const blob = new Blob([bytes], { type: mimeType });
     const url = URL.createObjectURL(blob);
-    console.log(`[Client] Created Blob URL: ${url}`);
+
 
     return url;
 

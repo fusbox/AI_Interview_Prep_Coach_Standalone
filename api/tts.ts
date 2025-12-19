@@ -19,17 +19,11 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
     }
 
-    // Masked logging for debug
-    console.log(`[TTS] Loaded API Key. Length: ${apiKey.length}, Starts: ${apiKey.substring(0, 4)}...`);
-
     const ai = new GoogleGenAI({ apiKey });
-
-    console.log(`[TTS] Starting generation for text: "${text.substring(0, 20)}..."`);
 
     // 2. Call Gemini 2.5 Flash for Audio
     const wrapped = `Instruction: Read the following interview question as a hiring manager addressing a candidate.\n${text}`;
 
-    console.log("[TTS] Calling Gemini API...");
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-preview-tts',
       contents: {
@@ -47,7 +41,6 @@ export default async function handler(req, res) {
       }
     });
 
-    console.log("[TTS] Gemini API responded.");
     const candidate = response.candidates?.[0];
     const part = candidate?.content?.parts?.[0];
 
@@ -57,15 +50,11 @@ export default async function handler(req, res) {
     }
 
     const mimeType = part.inlineData.mimeType || 'unknown';
-    console.log(`[TTS] Audio data received. MimeType: ${mimeType}`);
-
     const base64Audio = part.inlineData.data;
     const audioBuffer = Buffer.from(base64Audio, 'base64');
-    console.log(`[TTS] Received Audio Buffer Size: ${audioBuffer.length} bytes`);
 
     // Case A: Gemini returned MP3 (send as is)
     if (mimeType === 'audio/mpeg' || mimeType === 'audio/mp3') {
-      console.log("[TTS] Gemini returned MP3. Sending directly.");
       return res.status(200).json({
         audioBase64: base64Audio,
         mimeType: 'audio/mpeg'
@@ -73,17 +62,10 @@ export default async function handler(req, res) {
     }
 
     // Case B: Gemini returned Raw PCM (audio/L16) -> Wrap in WAV Header
-    // We tried swapping bytes (BE->LE) and it didn't help.
-    // We tried sending as is (LE) and it didn't help.
-    // But we must fix the syntax error first.
-    // Let's stick to the standard assumption: PCM is usually Little Endian on these APIs unless specified.
     if (mimeType.startsWith('audio/L16') || mimeType.startsWith('audio/pcm')) {
-      console.log("[TTS] Gemini returned PCM. Wrapping in WAV header...");
-
       const wavHeader = createWavHeader(audioBuffer.length);
       const wavBuffer = Buffer.concat([wavHeader, audioBuffer]);
 
-      console.log(`[TTS] Sending WAV. Total Size: ${wavBuffer.length} bytes`);
       return res.status(200).json({
         audioBase64: wavBuffer.toString('base64'),
         mimeType: 'audio/wav'

@@ -14,6 +14,7 @@ const RoleSelection: React.FC = () => {
     const { user, signOut } = useAuth();
     const { hasCompletedSession } = useGuestTracker();
     const [processingState, setProcessingState] = useState<{ isActive: boolean; text: string }>({ isActive: false, text: '' });
+    const [error, setError] = useState<string | null>(null);
 
     // Redirect hooked guests to signup
     React.useEffect(() => {
@@ -28,7 +29,9 @@ const RoleSelection: React.FC = () => {
             await startSession(role);
             navigate('/interview');
         } catch (e) {
-            alert("Failed to generate questions. Please try again.");
+            console.error(e);
+            setError("Failed to generate questions. Please try again.");
+            setTimeout(() => setError(null), 3000);
         } finally {
             setProcessingState({ isActive: false, text: '' });
         }
@@ -107,6 +110,13 @@ const RoleSelection: React.FC = () => {
                             <p className="mt-8 text-slate-800 font-display font-medium text-xl animate-pulse">{processingState.text}</p>
                         </div>
                     )}
+
+                    {error && (
+                        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-rose-100 border border-rose-200 text-rose-700 px-6 py-3 rounded-full shadow-lg animate-fade-in font-medium">
+                            {error}
+                        </div>
+                    )}
+
 
                     <div className="max-w-7xl mx-auto">
                         <div className="mb-10">

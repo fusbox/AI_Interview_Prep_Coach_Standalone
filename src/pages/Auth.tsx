@@ -12,6 +12,7 @@ const Auth: React.FC = () => {
     const [password, setPassword] = useState('');
     const [mode, setMode] = useState<'signin' | 'signup'>('signin');
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
     const handleAuth = async (e: React.FormEvent) => {
@@ -30,7 +31,7 @@ const Auth: React.FC = () => {
                     // options: { captchaToken }
                 });
                 if (error) throw error;
-                alert('Success! Check your email for the confirmation link.');
+                setSuccessMessage('Success! Check your email for the confirmation link.');
             } else {
                 // Determine if we need to pass captcha for sign in (based on user settings)
                 // If the widget is displayed and verifyed, use it.
@@ -74,6 +75,11 @@ const Auth: React.FC = () => {
                 {error && (
                     <div className="mb-6 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-sm rounded-lg">
                         {error}
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="mb-6 p-3 bg-emerald-50 border border-emerald-100 text-emerald-600 text-sm rounded-lg">
+                        {successMessage}
                     </div>
                 )}
 

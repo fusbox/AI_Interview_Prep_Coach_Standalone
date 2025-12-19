@@ -24,6 +24,7 @@ const Interview: React.FC = () => {
 
     const [processingState, setProcessingState] = useState<{ isActive: boolean; text: string }>({ isActive: false, text: '' });
     const [activeTab, setActiveTab] = useState<'voice' | 'text'>('voice');
+    const [error, setError] = useState<string | null>(null);
 
     // Safe access to current question
     const currentQ = session.questions[session.currentQuestionIndex];
@@ -61,7 +62,8 @@ const Interview: React.FC = () => {
         try {
             await startRecording();
         } catch (err) {
-            alert("Microphone access is required to use this app.");
+            setError("Microphone access is required to use this app.");
+            setTimeout(() => setError(null), 4000);
         }
     };
 
@@ -92,7 +94,8 @@ const Interview: React.FC = () => {
             resetText();
             navigate('/review');
         } catch (e) {
-            alert("Failed to analyze answer.");
+            setError("Failed to analyze answer. Please try again.");
+            setTimeout(() => setError(null), 3000);
         } finally {
             setProcessingState({ isActive: false, text: '' });
         }
@@ -108,6 +111,12 @@ const Interview: React.FC = () => {
                 </div>
             ) : (
                 <div className="flex flex-col lg:flex-row h-full relative">
+                    {/* Error Toast */}
+                    {error && (
+                        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-rose-100 border border-rose-200 text-rose-700 px-6 py-3 rounded-full shadow-lg animate-fade-in font-medium flex items-center gap-2">
+                            <span>{error}</span>
+                        </div>
+                    )}
 
                     {/* Left Column (40%): Question & Input */}
                     <div className="w-full lg:w-[45%] h-full flex flex-col relative border-r border-slate-200 bg-white shadow-sm z-10">
