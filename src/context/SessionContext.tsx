@@ -31,22 +31,20 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [session]);
 
     const startSession = async (role: string, jobDescription?: string) => {
-        // Reset first to clear old data
+        // Fetch questions FIRST. If this fails, we throw and do NOT update state/storage
+        const questions = await generateQuestions(role, jobDescription);
+
+        // Only reach here if API call succeeded
         const newSession = {
             role,
             jobDescription,
-            questions: [],
+            questions,
             currentQuestionIndex: 0,
             answers: {}
         };
-        setSession(newSession); // Update state immediately
 
-        const questions = await generateQuestions(role, jobDescription);
-
-        setSession(prev => ({
-            ...prev,
-            questions
-        }));
+        setSession(newSession);
+        // localStorage is updated by the useEffect dependency on 'session'
     };
 
     const nextQuestion = () => {
