@@ -257,10 +257,9 @@ const Interview: React.FC = () => {
                             {currentQ?.tips ? (
                                 <QuestionTips tips={currentQ.tips} />
                             ) : (
-                                <div className="space-y-6 opacity-30 animate-pulse">
-                                    <div className="h-32 bg-slate-200 rounded-2xl"></div>
-                                    <div className="h-20 bg-slate-200 rounded-2xl"></div>
-                                    <div className="h-40 bg-slate-200 rounded-2xl"></div>
+                                <div className="h-full flex flex-col items-center justify-center opacity-75">
+                                    <Loader />
+                                    <p className="mt-4 text-slate-400 text-sm font-medium animate-pulse">Consulting Coach...</p>
                                 </div>
                             )}
                         </div>
