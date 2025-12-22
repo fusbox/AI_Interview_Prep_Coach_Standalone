@@ -2,12 +2,30 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, RefreshCw, Award, ChevronRight, MessageSquare, CheckCircle2, Activity } from '../components/Icons';
 import { useSession } from '../hooks/useSession';
+import Loader from '../components/Loader';
+import SkeletonLoader from '../components/SkeletonLoader';
 
 const Review: React.FC = () => {
     const navigate = useNavigate();
-    const { session, nextQuestion } = useSession();
+    const { session, nextQuestion, isLoading } = useSession();
+
+    if (isLoading) return <SkeletonLoader />;
+
+    // Guard against direct access if session is empty (e.g. manual nav to /review without data)
+    if (!session || !session.questions || session.questions.length === 0) {
+        // Optional: redirect to home or show specific message
+        // navigate('/'); 
+        // return null;
+        // For now, let's just return loader or null to avoid crash until redirect happens (if we added one)
+        // But the user reported crash on refresh. If we return null here, it's safe.
+        return <div className="p-8 text-center text-slate-500">No session data found. Redirecting...</div>;
+    }
 
     const currentQ = session.questions[session.currentQuestionIndex];
+
+    // Extra guard for currentQ
+    if (!currentQ) return <SkeletonLoader />;
+
     const answer = session.answers[currentQ.id];
     const isLastQuestion = session.currentQuestionIndex === session.questions.length - 1;
 

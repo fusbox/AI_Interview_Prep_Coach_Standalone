@@ -5,6 +5,7 @@ import AudioVisualizer from '../components/AudioVisualizer';
 import QuestionCard from '../components/QuestionCard';
 import QuestionTips from '../components/QuestionTips';
 import Loader from '../components/Loader';
+import SkeletonLoader from '../components/SkeletonLoader';
 import { useSession } from '../hooks/useSession';
 import { useRecording } from '../hooks/useRecording';
 import { useTextAnswer } from '../hooks/useTextAnswer';
@@ -16,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Interview: React.FC = () => {
     const navigate = useNavigate();
-    const { session, saveAnswer, loadTipsForQuestion, goToQuestion } = useSession();
+    const { session, saveAnswer, loadTipsForQuestion, goToQuestion, isLoading } = useSession();
     const { isRecording, mediaStream, startRecording, stopRecording } = useRecording();
     const { text, error: textError, handleTextChange, submitTextAnswer, resetText, maxLength } = useTextAnswer();
     const { hasCompletedSession } = useGuestTracker();
@@ -42,12 +43,12 @@ const Interview: React.FC = () => {
         }
     }, [user, hasCompletedSession, navigate]);
 
-    // Redirect if no questions (e.g. page reload on empty session)
+    // Redirect if no questions (e.g. page reload on empty session) - BUT WAIT FOR LOADING
     React.useEffect(() => {
-        if (session.questions.length === 0) {
+        if (!isLoading && session.questions.length === 0) {
             navigate('/select-role');
         }
-    }, [session.questions, navigate]);
+    }, [session.questions, isLoading, navigate]);
 
     // Lazy load tips when current question changes
     React.useEffect(() => {
@@ -56,7 +57,7 @@ const Interview: React.FC = () => {
         }
     }, [currentQ?.id, currentQ?.tips, loadTipsForQuestion]);
 
-    if (!currentQ) return <Loader />;
+    if (isLoading || !currentQ) return <SkeletonLoader variant="interview" />;
 
     const handleStartRecording = async () => {
         try {

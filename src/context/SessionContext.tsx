@@ -12,6 +12,7 @@ interface SessionContextType {
     loadTipsForQuestion: (questionId: string) => Promise<void>;
     saveAnswer: (questionId: string, answer: { audioBlob?: Blob; text?: string; analysis: AnalysisResult | null }) => void;
     resetSession: () => void;
+    isLoading: boolean;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -32,19 +33,26 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     // Persistence State
     const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('current_session_id'));
     const [isGuest, setIsGuest] = useState<boolean>(true);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     // Initial Load & Auth Check
     useEffect(() => {
         const checkUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            setIsGuest(!user);
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                setIsGuest(!user);
 
-            if (user && sessionId) {
-                // For authenticated users, fetch latest state from server
-                const remoteSession = await sessionService.getSession(sessionId);
-                if (remoteSession) {
-                    setSession(remoteSession);
+                if (user && sessionId) {
+                    // For authenticated users, fetch latest state from server
+                    const remoteSession = await sessionService.getSession(sessionId);
+                    if (remoteSession) {
+                        setSession(remoteSession);
+                    }
                 }
+            } catch (error) {
+                console.error("Session restoration failed:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
         checkUser();
@@ -144,7 +152,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
 
     return (
-        <SessionContext.Provider value={{ session, startSession, nextQuestion, saveAnswer, resetSession, loadTipsForQuestion, goToQuestion }}>
+        <SessionContext.Provider value={{ session, isLoading, startSession, nextQuestion, saveAnswer, resetSession, loadTipsForQuestion, goToQuestion }}>
             {children}
         </SessionContext.Provider>
     );
