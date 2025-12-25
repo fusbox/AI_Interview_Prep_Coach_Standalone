@@ -73,7 +73,7 @@ Built with **React**, **Supabase**, and powered by **Google's Gemini 2.5 Flash**
 
 1.  **Start:** 
     *   Select a **Role** (e.g., "Project Manager") OR
-    *   Click **"Paste Job Description"** to input a specific JD.
+    *   Click **"Use Custom Job Description"** to input a specific JD.
 2.  **Answer:** 
     *   Listen to the question (or read it).
     *   Click the **Mic** to record your answer, or switch to **Text** mode to type.

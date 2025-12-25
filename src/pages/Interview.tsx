@@ -107,11 +107,7 @@ const Interview: React.FC = () => {
     return (
         <div className="flex flex-col h-screen w-full bg-slate-50 overflow-hidden font-sans">
             {processingState.isActive ? (
-                <div className="flex-1 flex flex-col items-center justify-center animate-fade-in p-6">
-                    <Loader />
-                    <p className="mt-8 text-2xl font-display font-medium text-slate-800">{processingState.text}</p>
-                    <p className="text-slate-500 mt-2">This may take a few seconds...</p>
-                </div>
+                <SkeletonLoader variant="history" />
             ) : (
                 <div className="flex flex-col lg:flex-row h-full relative">
                     {/* Error Toast */}
@@ -169,6 +165,7 @@ const Interview: React.FC = () => {
                             currentIndex={session.currentQuestionIndex}
                             answers={session.answers}
                             onSelect={goToQuestion}
+                            onBack={() => navigate('/')}
                         />
                     </div>
 
@@ -177,9 +174,6 @@ const Interview: React.FC = () => {
                         {/* Header */}
                         <div className="flex-none px-4 lg:px-8 py-4 lg:py-6 flex items-center justify-between bg-white lg:bg-transparent z-20 border-b lg:border-0 border-slate-100">
                             <div className="flex items-center gap-2">
-                                <button onClick={() => navigate('/')} className="text-slate-400 hover:text-slate-600 transition-colors p-1">
-                                    <ChevronLeft size={24} />
-                                </button>
                                 {/* Mobile: Question Set Button */}
                                 <button
                                     onClick={() => setMobileOverlay('questions')}

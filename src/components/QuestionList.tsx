@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check } from './Icons';
+import { Check, ChevronLeft } from './Icons';
 import { cn } from '../lib/utils';
 import { Question } from '../types';
 
@@ -8,12 +8,18 @@ interface QuestionListProps {
     currentIndex: number;
     answers: Record<string, any>;
     onSelect: (index: number) => void;
+    onBack?: () => void;
 }
 
-const QuestionList: React.FC<QuestionListProps> = ({ questions, currentIndex, answers, onSelect }) => {
+const QuestionList: React.FC<QuestionListProps> = ({ questions, currentIndex, answers, onSelect, onBack }) => {
     return (
         <div className="h-full flex flex-col bg-white overflow-hidden">
-            <div className="px-6 py-6 border-b border-slate-100 bg-white sticky top-0 z-10 shrink-0">
+            <div className="px-6 py-6 border-b border-slate-100 bg-white sticky top-0 z-10 shrink-0 flex items-center gap-3">
+                {onBack && (
+                    <button onClick={onBack} className="text-slate-400 hover:text-slate-600 transition-colors -ml-2 p-1">
+                        <ChevronLeft size={20} />
+                    </button>
+                )}
                 <h3 className="font-display font-bold text-slate-800 text-sm uppercase tracking-wider">Question Set</h3>
             </div>
 
@@ -44,16 +50,10 @@ const QuestionList: React.FC<QuestionListProps> = ({ questions, currentIndex, an
                                 {isAnswered ? <Check size={12} strokeWidth={3} /> : index + 1}
                             </div>
                             <span className={cn(
-                                "leading-relaxed wrap-break-word", // Removed line-clamp-2
+                                "leading-relaxed wrap-break-word",
                                 isActive ? "font-semibold" : "font-medium"
                             )}>
-                                {/* We will rely on parent passing decoded text or decode here if needed, 
-                                    but usually better to keep pure. The parent Interview.tsx does decoding.
-                                    Let's handle HTML dangerously or assume clean text? 
-                                    The existing code used a helper decodeHtml. 
-                                    Let's add a simple decoder here or accept rendered react node?
-                                    Simplest is to re-implement decodeHtml locally or utility.
-                                */}
+
                                 <span dangerouslySetInnerHTML={{ __html: q.text }} />
                             </span>
                         </button>
