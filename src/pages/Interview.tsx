@@ -174,6 +174,14 @@ const Interview: React.FC = () => {
                         {/* Header */}
                         <div className="flex-none px-4 lg:px-8 py-4 lg:py-6 flex items-center justify-between bg-white lg:bg-transparent z-20 border-b lg:border-0 border-slate-100">
                             <div className="flex items-center gap-2">
+                                {/* Mobile: Back Button */}
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
+                                >
+                                    <ChevronLeft size={24} />
+                                </button>
+
                                 {/* Mobile: Question Set Button */}
                                 <button
                                     onClick={() => setMobileOverlay('questions')}

@@ -108,7 +108,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, role, currentInde
 
         <h2 className={cn(
           "text-3xl md:text-3xl font-display font-semibold text-slate-900 leading-tight mb-8",
-          question.length > 100 && "text-2xl" // Scale down for very long questions
+          question.length > 300 ? "text-lg" :
+            question.length > 200 ? "text-xl" :
+              question.length > 100 ? "text-2xl" : "text-3xl"
         )}>
           {question}
         </h2>
