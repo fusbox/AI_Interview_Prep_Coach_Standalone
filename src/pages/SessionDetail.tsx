@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Calendar, Award, User, MessageSquare, Activity, Lightbulb, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Award, User, MessageSquare, Activity, Lightbulb, CheckCircle2, Star, CheckSquare } from 'lucide-react';
 import { fetchSessionById, SessionHistory } from '../services/storageService';
 import Loader from '../components/Loader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { cn } from '../lib/utils';
+import QuestionTips from '../components/QuestionTips';
 
 const SessionDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -77,7 +78,7 @@ const SessionDetail: React.FC = () => {
     return (
         <div className="flex flex-col h-screen bg-slate-50">
             {/* Scrollable Container */}
-            <div className="flex-1 overflow-y-auto py-8 px-4 sm:px-6">
+            <div className="flex-1 overflow-y-auto min-h-0 py-8 px-4 sm:px-6">
                 <div className="max-w-4xl mx-auto pb-12">
                     {/* Header */}
                     <button
@@ -161,73 +162,116 @@ const SessionDetail: React.FC = () => {
 
                                     {isExpanded && (
                                         <div className="px-6 pb-8 pt-2 border-t border-slate-50 animate-fade-in bg-slate-50/30">
-                                            {/* User Answer */}
-                                            <div className="mb-8">
-                                                <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-400 uppercase tracking-wider">
-                                                    <User size={16} /> Your Answer
-                                                </div>
-                                                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-slate-600 text-base leading-relaxed italic relative">
-                                                    <span className="absolute top-4 left-4 text-4xl text-slate-100 font-serif leading-none">"</span>
-                                                    <p className="relative z-10">{decodeHtml(analysis?.transcript || answerData.text || "No transcript available.")}</p>
-                                                </div>
-                                            </div>
-
-                                            {/* AI Analysis */}
-                                            {analysis && (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                    {/* Feedback */}
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-3 text-sm font-bold text-[#376497] uppercase tracking-wider">
-                                                            <MessageSquare size={16} /> Feedback
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                                                {/* Left Column: Transcript & Analysis */}
+                                                <div>
+                                                    {/* User Answer */}
+                                                    <div className="mb-8">
+                                                        <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-400 uppercase tracking-wider">
+                                                            <User size={16} /> Your Answer
                                                         </div>
-                                                        <ul className="space-y-3">
-                                                            {analysis.feedback.map((point, i) => (
-                                                                <li key={i} className="flex items-start gap-3 text-slate-600 text-sm bg-white p-4 rounded-xl border border-slate-100">
-                                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                                                                    <span className="leading-snug">{point}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
+                                                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-slate-600 text-base leading-relaxed italic relative">
+                                                            <span className="absolute top-4 left-4 text-4xl text-slate-100 font-serif leading-none">"</span>
+                                                            <p className="relative z-10 whitespace-pre-wrap">{decodeHtml(analysis?.transcript || answerData.text || "No transcript available.")}</p>
+                                                        </div>
                                                     </div>
 
-                                                    {/* Delivery & Terms */}
-                                                    <div className="space-y-6">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-3 text-sm font-bold text-emerald-600 uppercase tracking-wider">
-                                                                <Activity size={16} /> Rating: {analysis.rating}
+                                                    {/* Key Terms */}
+                                                    {analysis?.keyTerms && analysis.keyTerms.length > 0 && (
+                                                        <div className="mb-8">
+                                                            <div className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-400 uppercase tracking-wider">
+                                                                <Award size={16} /> Key Terms
                                                             </div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {analysis.keyTerms.map((term, i) => (
+                                                                    <span key={i} className="px-3 py-1 bg-blue-50 text-[#376497] rounded-md text-sm font-medium border border-blue-100">
+                                                                        {term}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Feedback */}
+                                                    {analysis?.feedback && (
+                                                        <div className="mb-8">
+                                                            <div className="flex items-center gap-2 mb-3 text-sm font-bold text-[#376497] uppercase tracking-wider">
+                                                                <MessageSquare size={16} /> Feedback
+                                                            </div>
+                                                            <ul className="space-y-3">
+                                                                {analysis.feedback.map((point, i) => (
+                                                                    <li key={i} className="flex items-start gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                                                                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                                                        <span className="text-slate-600 text-sm leading-relaxed">{point}</span>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Delivery */}
+                                                    {(analysis?.deliveryStatus || analysis?.deliveryTips) && (
+                                                        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                                            <div className="flex items-center gap-2 mb-3 text-sm font-bold text-emerald-600 uppercase tracking-wider">
+                                                                <Activity size={16} /> Delivery Analysis
+                                                            </div>
+
                                                             {analysis.deliveryStatus && (
-                                                                <div className="mb-4 text-sm text-slate-600">
-                                                                    <span className="font-medium text-slate-900">Delivery:</span> {analysis.deliveryStatus}
+                                                                <div className="mb-3 flex items-center gap-2">
+                                                                    <span className="text-sm font-bold text-slate-700">Status:</span>
+                                                                    <span className="text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">{analysis.deliveryStatus}</span>
                                                                 </div>
                                                             )}
+
                                                             {analysis.deliveryTips && analysis.deliveryTips.length > 0 && (
                                                                 <div className="space-y-2">
                                                                     {analysis.deliveryTips.map((tip, i) => (
-                                                                        <div key={i} className="flex items-start gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded lg">
-                                                                            <Lightbulb size={12} className="mt-0.5 text-amber-500 shrink-0" />
+                                                                        <div key={i} className="flex items-start gap-2 text-sm text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                                            <Lightbulb size={14} className="mt-0.5 text-amber-500 shrink-0" />
                                                                             {tip}
                                                                         </div>
                                                                     ))}
                                                                 </div>
                                                             )}
                                                         </div>
+                                                    )}
+                                                </div>
 
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-2 text-sm font-bold text-slate-400 uppercase tracking-wider">
-                                                                Key Terms
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {analysis.keyTerms.map((term, i) => (
-                                                                    <span key={i} className="px-3 py-1 bg-blue-50 text-[#376497] rounded-md text-xs font-medium border border-blue-100">
-                                                                        {term}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
+                                                {/* Right Column: Strong Response & Why This Works */}
+                                                <div>
+                                                    {/* Strong Response Card */}
+                                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 mb-8 overflow-hidden">
+                                                        <div className="bg-amber-50 px-6 py-4 border-b border-amber-100 flex items-center gap-2">
+                                                            <Star size={18} className="text-amber-500 fill-current" />
+                                                            <h3 className="font-bold text-amber-700 text-sm uppercase tracking-wide">Strong Response Example</h3>
+                                                        </div>
+                                                        <div className="p-6">
+                                                            {analysis?.strongResponse ? (
+                                                                <p className="text-slate-700 leading-relaxed text-lg italic">
+                                                                    "{analysis.strongResponse}"
+                                                                </p>
+                                                            ) : (
+                                                                <div className="text-center py-4">
+                                                                    <p className="text-slate-400 italic mb-1">Example response not available.</p>
+                                                                    <p className="text-xs text-slate-300">Analysis may be incomplete.</p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
+
+                                                    {/* Why This Works Section */}
+                                                    {analysis?.whyThisWorks && (
+                                                        <div className="animate-fade-in">
+                                                            <div className="flex items-center gap-2 text-[#376497] mb-4">
+                                                                <CheckSquare size={18} className="stroke-[2.5]" />
+                                                                <h3 className="font-bold text-slate-700 text-sm uppercase tracking-wide">Why This Works</h3>
+                                                            </div>
+                                                            {/* Reuse QuestionTips component but pass whyThisWorks data */}
+                                                            <QuestionTips tips={analysis.whyThisWorks} />
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
                                     )}
                                 </Card>

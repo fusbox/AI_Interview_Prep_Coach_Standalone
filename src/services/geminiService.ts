@@ -1,8 +1,5 @@
 import { Question, AnalysisResult, QuestionTips } from "../types";
 
-// Note: API Key is now handled server-side in api/ endpoints.
-
-
 // --- Helpers ---
 
 export const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -16,6 +13,48 @@ export const blobToBase64 = (blob: Blob): Promise<string> => {
     reader.readAsDataURL(blob);
   });
 };
+
+// --- Mock Data Generators ---
+
+const mockQuestions = (role: string): Question[] => [
+  { id: '1', text: `Tell me about a time you faced a challenge in ${role}.` },
+  { id: '2', text: `Why are you interested in a career in ${role}?` },
+  { id: '3', text: "Describe a successful project you worked on." },
+];
+
+const mockTips = (role: string): QuestionTips => ({
+  lookingFor: "The interviewer wants to see your problem-solving process and resilience.",
+  pointsToCover: ["The specific situation", "The action you took", "The positive result"],
+  answerFramework: "Use the STAR method (Situation, Task, Action, Result) to structure your response.",
+  industrySpecifics: {
+    metrics: "Efficiency improvement, cost reduction",
+    tools: "Jira, Trello, Slack"
+  },
+  mistakesToAvoid: ["Blaming others", "Being vague about your contribution", "Focusing too much on the problem instead of the solution"],
+  proTip: "Turn the challenge into a learning opportunity."
+});
+
+const mockAnalysis = (): AnalysisResult => ({
+  transcript: "This is a simulated transcript because the API call failed or no key was provided. I talked about my experience with leading teams and solving complex data problems.",
+  feedback: [
+    "Try to use the STAR method (Situation, Task, Action, Result) more explicitly.",
+    "Your tone was confident, which is great.",
+    "Mention specific tools or technologies you utilized."
+  ],
+  keyTerms: ["Leadership", "Data Analysis", "Problem Solving"],
+  rating: "Developing",
+  deliveryStatus: "Clear & Paced",
+  deliveryTips: ["Good volume, but try to vary your pitch to sound more engaging.", "Pace was steady and easy to follow."],
+  strongResponse: "A strong response would clearly articulate the situation, task, action, and result, demonstrating leadership and technical skills.",
+  whyThisWorks: {
+    lookingFor: "Demonstrates clear leadership.",
+    pointsToCover: ["Situation clearly described", "Action detailed", "Result quantified"],
+    answerFramework: "Follows STAR perfectly.",
+    industrySpecifics: { metrics: "Mentioned 20% growth", tools: "Used Python and SQL" },
+    mistakesToAvoid: ["Did not blame others", "Was specific"],
+    proTip: "Showed growth mindset."
+  }
+});
 
 // --- API Functions ---
 
@@ -59,6 +98,7 @@ export const generateQuestionTips = async (question: string, role: string): Prom
   }
 };
 
+// Reverted to fast analysis (no tips needed)
 export const analyzeAnswer = async (question: string, input: Blob | string): Promise<AnalysisResult> => {
   try {
     let payload: any = { question };
@@ -92,13 +132,33 @@ export const analyzeAnswer = async (question: string, input: Blob | string): Pro
   }
 };
 
+export const generateStrongResponse = async (question: string, tips: QuestionTips): Promise<{ strongResponse: string; whyThisWorks: QuestionTips }> => {
+  try {
+    const response = await fetch('/api/generate-strong-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, tips })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating strong response:", error);
+    // Fallback for demo/error purposes
+    return {
+      strongResponse: "Could not generate strong response at this time.",
+      whyThisWorks: tips // Fallback to just showing original tips structure if generation fails
+    };
+  }
+};
+
 export const generateSpeech = async (text: string): Promise<string | null> => {
   if (!text.trim()) return null;
 
   try {
-
-
-    // Call your own serverless function
     const response = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -126,10 +186,8 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
 
     const mimeType = data.mimeType || 'audio/mpeg';
 
-
     const blob = new Blob([bytes], { type: mimeType });
     const url = URL.createObjectURL(blob);
-
 
     return url;
 
@@ -138,35 +196,3 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
     throw error;
   }
 };
-
-// Fallback data
-const mockQuestions = (role: string): Question[] => [
-  { id: '1', text: `Tell me about a time you faced a challenge in ${role}.` },
-  { id: '2', text: `Why are you interested in a career in ${role}?` },
-  { id: '3', text: "Describe a successful project you worked on." },
-];
-
-const mockTips = (role: string): QuestionTips => ({
-  lookingFor: "The interviewer wants to see your problem-solving process and resilience.",
-  pointsToCover: ["The specific situation", "The action you took", "The positive result"],
-  answerFramework: "Use the STAR method (Situation, Task, Action, Result) to structure your response.",
-  industrySpecifics: {
-    metrics: "Efficiency improvement, cost reduction",
-    tools: "Jira, Trello, Slack"
-  },
-  mistakesToAvoid: ["Blaming others", "Being vague about your contribution", "Focusing too much on the problem instead of the solution"],
-  proTip: "Turn the challenge into a learning opportunity."
-});
-
-const mockAnalysis = (): AnalysisResult => ({
-  transcript: "This is a simulated transcript because the API call failed or no key was provided. I talked about my experience with leading teams and solving complex data problems.",
-  feedback: [
-    "Try to use the STAR method (Situation, Task, Action, Result) more explicitly.",
-    "Your tone was confident, which is great.",
-    "Mention specific tools or technologies you utilized."
-  ],
-  keyTerms: ["Leadership", "Data Analysis", "Problem Solving"],
-  rating: "Developing",
-  deliveryStatus: "Clear & Paced",
-  deliveryTips: ["Good volume, but try to vary your pitch to sound more engaging.", "Pace was steady and easy to follow."]
-});

@@ -11,6 +11,7 @@ interface SessionContextType {
     goToQuestion: (index: number) => void;
     loadTipsForQuestion: (questionId: string) => Promise<void>;
     saveAnswer: (questionId: string, answer: { audioBlob?: Blob; text?: string; analysis: AnalysisResult | null }) => void;
+    updateAnswerAnalysis: (questionId: string, partialAnalysis: Partial<AnalysisResult>) => void;
     resetSession: () => void;
     isLoading: boolean;
 }
@@ -140,6 +141,27 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         }));
     };
 
+    const updateAnswerAnalysis = (questionId: string, partialAnalysis: Partial<AnalysisResult>) => {
+        setSession(prev => {
+            const currentAnswer = prev.answers[questionId];
+            if (!currentAnswer || !currentAnswer.analysis) return prev; // Can't update if doesn't exist
+
+            return {
+                ...prev,
+                answers: {
+                    ...prev.answers,
+                    [questionId]: {
+                        ...currentAnswer,
+                        analysis: {
+                            ...currentAnswer.analysis,
+                            ...partialAnalysis
+                        }
+                    }
+                }
+            };
+        });
+    };
+
     const resetSession = () => {
         const emptySession = {
             role: '',
@@ -152,7 +174,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
 
     return (
-        <SessionContext.Provider value={{ session, isLoading, startSession, nextQuestion, saveAnswer, resetSession, loadTipsForQuestion, goToQuestion }}>
+        <SessionContext.Provider value={{ session, isLoading, startSession, nextQuestion, saveAnswer, resetSession, loadTipsForQuestion, goToQuestion, updateAnswerAnalysis }}>
             {children}
         </SessionContext.Provider>
     );

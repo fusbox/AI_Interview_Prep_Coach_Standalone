@@ -90,29 +90,45 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ variant = 'review', tex
                 )}>
                     {variant === 'review' ? (
                         <div className="w-full h-full md:overflow-y-auto p-6 md:p-12 max-w-xl mx-auto pb-12 md:pb-24">
-                            {/* Breadcrumb / Label */}
-                            <div className="w-24 h-4 rounded-md bg-slate-200 animate-pulse mb-3"></div>
+                            {/* Header */}
+                            <div className="flex justify-between items-center mb-8">
+                                <div className="space-y-2">
+                                    <div className="w-24 h-3 rounded bg-slate-200 animate-pulse"></div>
+                                    <div className="w-64 h-8 rounded bg-slate-200 animate-pulse"></div>
+                                </div>
+                                <div className="w-20 h-8 rounded-full bg-slate-200 animate-pulse"></div>
+                            </div>
 
-                            {/* Main Card/Question Skeleton */}
-                            <div className="w-full space-y-6">
-                                <div className="h-8 w-3/4 rounded-lg bg-slate-200 animate-pulse"></div>
-                                <div className="h-8 w-full rounded-lg bg-slate-200 animate-pulse mb-8"></div>
+                            {/* Transcript Box */}
+                            <div className="bg-slate-50 p-6 rounded-2xl mb-8 border border-slate-100 shadow-inner space-y-3">
+                                <div className="w-32 h-3 bg-slate-200 rounded animate-pulse mb-4"></div>
+                                <div className="space-y-2">
+                                    <div className="w-full h-3 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="w-full h-3 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="w-4/5 h-3 bg-slate-100 rounded animate-pulse"></div>
+                                </div>
+                            </div>
 
-                                {/* Transcript box placeholder for Review */}
-                                <div className="bg-slate-50/50 p-8 rounded-2xl mb-8 border border-slate-100 shadow-inner space-y-4">
-                                    <div className="w-32 h-3 bg-slate-200 rounded animate-pulse"></div>
-                                    <div className="space-y-2">
-                                        <div className="w-full h-3 bg-slate-100 rounded animate-pulse"></div>
-                                        <div className="w-full h-3 bg-slate-100 rounded animate-pulse"></div>
-                                        <div className="w-4/5 h-3 bg-slate-100 rounded animate-pulse"></div>
+                            {/* AI Insights Placeholders (Feedback etc.) */}
+                            <div className="space-y-6 mb-8">
+                                {[1, 2].map(i => (
+                                    <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse"></div>
+                                            <div className="w-32 h-5 rounded bg-slate-200 animate-pulse"></div>
+                                        </div>
+                                        <div className="space-y-2 pl-2">
+                                            <div className="w-full h-3 bg-slate-50 rounded animate-pulse"></div>
+                                            <div className="w-5/6 h-3 bg-slate-50 rounded animate-pulse"></div>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                            </div>
 
-                                {/* Action Buttons - Review Style */}
-                                <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
-                                    <div className="h-12 flex-1 rounded-xl bg-slate-200 animate-pulse"></div>
-                                    <div className="h-12 flex-1 rounded-xl bg-slate-200 animate-pulse"></div>
-                                </div>
+                            {/* Action Buttons */}
+                            <div className="flex gap-4 pt-8 border-t border-slate-100 mt-auto">
+                                <div className="h-12 flex-1 rounded-xl bg-slate-200 animate-pulse"></div>
+                                <div className="h-12 flex-1 rounded-xl bg-slate-200 animate-pulse"></div>
                             </div>
                         </div>
                     ) : (
@@ -134,7 +150,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ variant = 'review', tex
 
                 {/* Column 3: 
                    Interview: Tips (35%)
-                   Review: Insights (50%)
+                   Review: Strong Response (50%)
                 */}
                 <div className={cn(
                     "h-full flex-col",
@@ -144,43 +160,37 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ variant = 'review', tex
                 )}>
                     {variant === 'review' ? (
                         <div className="w-full h-full md:overflow-y-auto p-6 md:p-12 max-w-xl mx-auto pb-24">
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="w-32 h-8 rounded-lg bg-slate-200 animate-pulse"></div>
-                                    <div className="w-24 h-8 rounded-full bg-slate-200 animate-pulse"></div>
+                            {/* Strong Response Card Skeleton */}
+                            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 mb-8 overflow-hidden">
+                                <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded bg-slate-300 animate-pulse"></div>
+                                    <div className="w-40 h-4 rounded bg-slate-300 animate-pulse"></div>
                                 </div>
+                                <div className="p-6 md:p-8 space-y-3">
+                                    <div className="w-full h-4 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="w-full h-4 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="w-full h-4 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="w-3/4 h-4 bg-slate-100 rounded animate-pulse"></div>
+                                </div>
+                            </div>
 
-                                {/* Key Terms Card Placeholder */}
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-50 animate-pulse"></div>
-                                        <div className="w-40 h-5 rounded bg-slate-200 animate-pulse"></div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {[1, 2, 3, 4, 5].map(i => (
-                                            <div key={i} className="h-8 w-20 rounded-lg bg-slate-100 animate-pulse border border-slate-200/50"></div>
-                                        ))}
-                                    </div>
+                            {/* Why This Works Section Skeleton */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-6 h-6 rounded bg-slate-200 animate-pulse"></div>
+                                    <div className="w-32 h-6 rounded bg-slate-200 animate-pulse"></div>
                                 </div>
+                                <div className="w-64 h-3 rounded bg-slate-200 animate-pulse mb-6"></div>
 
-                                {/* Feedback Card Placeholder */}
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-6">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 animate-pulse"></div>
-                                        <div className="w-24 h-5 rounded bg-slate-200 animate-pulse"></div>
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="w-full h-16 rounded-xl bg-white border border-slate-200 shadow-sm p-4 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
+                                        <div className="flex-1 space-y-2">
+                                            <div className="w-1/3 h-3 bg-slate-100 rounded animate-pulse"></div>
+                                            <div className="w-2/3 h-2 bg-slate-50 rounded animate-pulse"></div>
+                                        </div>
                                     </div>
-                                    <ul className="space-y-4">
-                                        {[1, 2, 3].map(i => (
-                                            <li key={i} className="flex items-start gap-4 p-3 rounded-lg bg-slate-50/50">
-                                                <div className="w-5 h-5 rounded-full bg-emerald-100 animate-pulse shrink-0"></div>
-                                                <div className="space-y-2 flex-1">
-                                                    <div className="w-full h-3 bg-slate-100 rounded animate-pulse"></div>
-                                                    <div className="w-4/5 h-3 bg-slate-100 rounded animate-pulse"></div>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     ) : (

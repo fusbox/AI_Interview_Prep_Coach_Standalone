@@ -31,6 +31,8 @@ export interface AnalysisResult {
   deliveryStatus?: string; // e.g., "Clear & Paced", "Too Fast", "Monotone"
   deliveryTips?: string[]; // Specific delivery, tone, pace feedback
   rating: string; // e.g., "Strong", "Good", "Developing"
+  strongResponse?: string;
+  whyThisWorks?: QuestionTips;
 }
 
 export interface InterviewSession {
