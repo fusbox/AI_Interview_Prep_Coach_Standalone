@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { sanitizeInput, truncateInput } from '../lib/sanitize';
 
-const MAX_TEXT_LENGTH = 1500;
+const MAX_TEXT_LENGTH = 2000;
 
 export function useTextAnswer() {
     const [text, setText] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleTextChange = (newText: string) => {
         if (newText.length > MAX_TEXT_LENGTH) {
@@ -24,21 +25,29 @@ export function useTextAnswer() {
             return null;
         }
 
+        setIsSubmitting(true);
         const sanitized = sanitizeInput(truncateInput(trimmed, MAX_TEXT_LENGTH));
+
+        // Mock async
+        setTimeout(() => setIsSubmitting(false), 500);
+
         return sanitized;
     };
 
     const resetText = () => {
         setText('');
         setError(null);
+        setIsSubmitting(false);
     };
 
     return {
-        text,
+        textAnswer: text,        // Changed to textAnswer to match consumption
+        setTextAnswer: setText,  // Exposed setter
         error,
         handleTextChange,
         submitTextAnswer,
         resetText,
+        isSubmitting,
         maxLength: MAX_TEXT_LENGTH
     };
 }

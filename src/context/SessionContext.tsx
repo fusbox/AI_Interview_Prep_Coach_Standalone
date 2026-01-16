@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { InterviewSession, AnalysisResult, Question, QuestionTips } from '../types';
-import { generateQuestions, generateQuestionTips } from '../services/geminiService';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { InterviewSession, AnalysisResult, Question, QuestionTips, CompetencyBlueprint } from '../types';
+import { generateQuestions, generateQuestionTips, generateBlueprint, generateQuestionPlan, generateSpeech, initSession } from '../services/geminiService';
 import { sessionService } from '../services/sessionService';
 import { supabase } from '../services/supabase';
 import CryptoJS from 'crypto-js';
@@ -33,17 +33,20 @@ const secureStorage = {
     }
 };
 
-interface SessionContextType {
+export interface SessionContextType {
     session: InterviewSession;
     startSession: (role: string, jobDescription?: string) => Promise<void>;
     nextQuestion: () => void;
     goToQuestion: (index: number) => void;
     loadTipsForQuestion: (questionId: string) => Promise<void>;
     saveAnswer: (questionId: string, answer: { audioBlob?: Blob; text?: string; analysis: AnalysisResult | null }) => void;
+    clearAnswer: (questionId: string) => void;
     updateAnswerAnalysis: (questionId: string, partialAnalysis: Partial<AnalysisResult>) => void;
     finishSession: () => Promise<void>;
     resetSession: () => void;
     isLoading: boolean;
+    audioUrls: Record<string, string>;
+    cacheAudioUrl: (questionId: string, url: string) => void;
 }
 
 export const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -53,6 +56,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [session, setSession] = useState<InterviewSession>(() => {
         const saved = secureStorage.getItem('current_session');
         const defaultSession: InterviewSession = {
+            id: 'default',
             role: '',
             questions: [],
             currentQuestionIndex: 0,
@@ -66,6 +70,13 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [sessionId, setSessionId] = useState<string | null>(() => localStorage.getItem('current_session_id'));
     const [isGuest, setIsGuest] = useState<boolean>(true);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+
+    // Audio Cache State (Blob URLs are ephemeral, so we keep them in memory only)
+    const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
+
+    const cacheAudioUrl = useCallback((questionId: string, url: string) => {
+        setAudioUrls(prev => ({ ...prev, [questionId]: url }));
+    }, []);
 
     // Initial Load & Auth Check
     useEffect(() => {
@@ -105,52 +116,190 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         return () => clearTimeout(timeout);
     }, [session, isGuest, sessionId]);
 
-    const startSession = async (role: string, jobDescription?: string) => {
-        // Fetch questions FIRST
-        const questions = await generateQuestions(role, jobDescription);
+    // OPTIMIZATION: Sequential Pre-fetching (Next Question)
+    useEffect(() => {
+        const preFetchNextAudio = async () => {
+            const nextIndex = session.currentQuestionIndex + 1;
+            if (nextIndex < session.questions.length) {
+                const nextQuestion = session.questions[nextIndex];
 
-        const newSession: InterviewSession = {
-            role,
-            jobDescription,
-            questions,
-            currentQuestionIndex: 0,
-            answers: {},
-            status: 'ACTIVE'
-        };
+                // Debug Log
+                console.log(`[Session] Checking pre-fetch for Q${nextIndex + 1}:`, {
+                    text: !!nextQuestion?.text,
+                    isLoading: nextQuestion?.isLoading
+                });
 
-        setSession(newSession);
-
-        if (isGuest) {
-            secureStorage.setItem('current_session', newSession);
-        } else {
-            // Create remote session for authenticated user
-            const newId = await sessionService.createSession(newSession);
-            if (newId) {
-                setSessionId(newId);
-                localStorage.setItem('current_session_id', newId);
-                // Clear local legacy session to avoid confusion
-                localStorage.removeItem('current_session');
+                // Pre-fetch Next Question Audio (if not already cached)
+                if (nextQuestion && nextQuestion.text && !nextQuestion.isLoading) {
+                    if (audioUrls[nextQuestion.id]) {
+                        console.log(`[Session] ⏭️ Audio for Q${nextIndex + 1} already cached. Skipping pre-fetch.`);
+                    } else {
+                        console.log(`[Session] 🔊 Triggering pre-fetch for Q${nextIndex + 1}`);
+                        generateSpeech(nextQuestion.text)
+                            .then(url => {
+                                if (url) {
+                                    setAudioUrls(prev => ({ ...prev, [nextQuestion.id]: url }));
+                                }
+                            })
+                            .catch(e => console.warn("Background audio fetch failed", e));
+                    }
+                }
             }
-        }
-    };
+        };
+        preFetchNextAudio();
+    }, [session.currentQuestionIndex, session.questions, audioUrls]);
 
-    const nextQuestion = () => {
+    const startSession = useCallback(async (role: string, jobDescription?: string) => {
+        setIsLoading(true);
+        setAudioUrls({}); // Clear audio cache for new session
+        try {
+            console.log("Initializing Session (Unified - Final Attempt)...");
+
+            // 1. Unified Call
+            const initData = await initSession(role, jobDescription);
+
+            let blueprint = null;
+            let questionPlan = null;
+            let firstBatch: Question[] = [];
+
+            if (initData) {
+                blueprint = initData.blueprint;
+                questionPlan = initData.questionPlan;
+
+                // Handle First Question
+                if (initData.firstQuestion) {
+                    const planQ1 = questionPlan?.questions[0];
+                    firstBatch = [{
+                        ...initData.firstQuestion,
+                        competencyId: planQ1?.competencyId,
+                        type: planQ1?.type,
+                        difficulty: planQ1?.difficulty
+                    }];
+
+                    // OPTIMIZATION: Pre-fetch audio immediately
+                    if (initData.firstQuestion && audioUrls[initData.firstQuestion.id]) {
+                        console.log(`[Session] ⏭️ Audio for Q1 already cached. Skipping pre-fetch.`);
+                    } else {
+                        console.log(`[Session] 🔊 Triggering pre-fetch for Q1`);
+                        generateSpeech(initData.firstQuestion.text)
+                            .then(url => {
+                                if (url && initData.firstQuestion) {
+                                    setAudioUrls(prev => ({ ...prev, [initData.firstQuestion!.id]: url }));
+                                }
+                            })
+                            .catch(e => console.warn("Audio pre-fetch failed", e));
+                    }
+
+                } else if (initData.questions && initData.questions.length > 0) {
+                    firstBatch = [initData.questions[0]];
+                }
+            } else {
+                console.warn("Unified Init failed. Falling back to specific generation...");
+                firstBatch = await generateQuestions(role, jobDescription);
+            }
+
+            // 2. Prepare Question List with Placeholders
+            let initialQuestions = [...firstBatch];
+
+            if (questionPlan && questionPlan.questions.length > 1) {
+                const placeholders = questionPlan.questions.slice(1).map((p: any, idx: number) => ({
+                    id: `pending-${idx + 1}`,
+                    text: "Analyzing job requirements...",
+                    type: p.type,
+                    competencyId: p.competencyId,
+                    difficulty: p.difficulty,
+                    isLoading: true
+                } as Question));
+                initialQuestions = [...initialQuestions, ...placeholders];
+            }
+
+            const newSession: InterviewSession = {
+                id: crypto.randomUUID(),
+                role,
+                jobDescription,
+                questions: initialQuestions,
+                currentQuestionIndex: 0,
+                answers: {},
+                status: 'ACTIVE',
+                blueprint: blueprint || undefined
+            };
+
+            setSession(newSession);
+            setIsLoading(false); // Immediate UI Entry
+
+            // 3. Background Fetch for Remaining Questions
+            if (questionPlan && questionPlan.questions.length > 1) {
+                const remainingIndices = questionPlan.questions.map((_: any, i: number) => i).slice(1);
+                console.log("Fetching remaining questions in background...", remainingIndices);
+
+                generateQuestions(
+                    role,
+                    jobDescription,
+                    questionPlan || undefined,
+                    blueprint || undefined,
+                    remainingIndices
+                ).then(remainingQuestions => {
+                    setSession(prev => {
+                        const updatedQuestions = [...prev.questions];
+                        remainingQuestions.forEach((q, i) => {
+                            const params = questionPlan!.questions[remainingIndices[i]];
+                            updatedQuestions[remainingIndices[i]] = {
+                                ...q,
+                                competencyId: params.competencyId,
+                                type: params.type,
+                                difficulty: params.difficulty,
+                                isLoading: false
+                            };
+                        });
+
+                        // Background persistence for guest
+                        if (isGuest) {
+                            secureStorage.setItem('current_session', { ...prev, questions: updatedQuestions });
+                        }
+                        return { ...prev, questions: updatedQuestions };
+                    });
+                }).catch(err => console.error("Background fetch failed", err));
+            }
+
+            // 4. Async Persistence Creation
+            if (isGuest) {
+                secureStorage.setItem('current_session', newSession);
+            } else {
+                sessionService.createSession(newSession).then(newId => {
+                    if (newId) {
+                        setSessionId(newId);
+                        localStorage.setItem('current_session_id', newId);
+                        localStorage.removeItem('current_session');
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error("Failed to start session:", error);
+            setIsLoading(false);
+        }
+    }, [isGuest]);
+
+    const nextQuestion = useCallback(() => {
         setSession(prev => ({
             ...prev,
             currentQuestionIndex: prev.currentQuestionIndex + 1
         }));
-    };
+    }, []);
 
-    const goToQuestion = (index: number) => {
-        if (index >= 0 && index < session.questions.length) {
-            setSession(prev => ({
-                ...prev,
-                currentQuestionIndex: index
-            }));
-        }
-    };
+    const goToQuestion = useCallback((index: number) => {
+        setSession(prev => {
+            if (index >= 0 && index < prev.questions.length) {
+                return {
+                    ...prev,
+                    currentQuestionIndex: index
+                };
+            }
+            return prev;
+        });
+    }, []);
 
-    const loadTipsForQuestion = async (questionId: string) => {
+    const loadTipsForQuestion = useCallback(async (questionId: string) => {
         const question = session.questions.find(q => q.id === questionId);
         if (!question || question.tips) return; // Already loaded or invalid
 
@@ -165,16 +314,24 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         } catch (error) {
             console.error("Failed to load tips for question:", questionId, error);
         }
-    };
+    }, [session.questions, session.role]);
 
-    const saveAnswer = (questionId: string, answer: { audioBlob?: Blob; text?: string; analysis: AnalysisResult | null }) => {
+    const saveAnswer = useCallback((questionId: string, answer: { audioBlob?: Blob; text?: string; analysis: AnalysisResult | null }) => {
         setSession(prev => ({
             ...prev,
             answers: { ...prev.answers, [questionId]: answer }
         }));
-    };
+    }, []);
 
-    const updateAnswerAnalysis = (questionId: string, partialAnalysis: Partial<AnalysisResult>) => {
+    const clearAnswer = useCallback((questionId: string) => {
+        setSession(prev => {
+            const newAnswers = { ...prev.answers };
+            delete newAnswers[questionId];
+            return { ...prev, answers: newAnswers };
+        });
+    }, []);
+
+    const updateAnswerAnalysis = useCallback((questionId: string, partialAnalysis: Partial<AnalysisResult>) => {
         setSession(prev => {
             const currentAnswer = prev.answers[questionId];
             if (!currentAnswer || !currentAnswer.analysis) return prev; // Can't update if doesn't exist
@@ -193,9 +350,11 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
                 }
             };
         });
-    };
+    }, []);
 
-    const finishSession = async () => {
+
+
+    const finishSession = useCallback(async () => {
         // Hardening: Verify at least one answer exists before completing
         const hasAnswers = Object.values(session.answers).some(a => a.text || a.audioBlob || a.analysis);
         if (!hasAnswers) {
@@ -210,10 +369,11 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
         } else if (sessionId) {
             await sessionService.updateSession(sessionId, { ...session, status: 'COMPLETED' });
         }
-    };
+    }, [session, isGuest, sessionId]);
 
-    const resetSession = () => {
+    const resetSession = useCallback(() => {
         const emptySession: InterviewSession = {
+            id: `reset-${Date.now()}`,
             role: '',
             questions: [],
             currentQuestionIndex: 0,
@@ -221,14 +381,29 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
             status: 'IDLE'
         };
         setSession(emptySession);
+        setAudioUrls({}); // Clear audio cache
         localStorage.removeItem('current_session');
-    };
+    }, []);
+
+    const contextValue = React.useMemo(() => ({
+        session,
+        isLoading,
+        audioUrls,
+        startSession,
+        nextQuestion,
+        goToQuestion,
+        loadTipsForQuestion,
+        saveAnswer,
+        clearAnswer,
+        updateAnswerAnalysis,
+        cacheAudioUrl,
+        finishSession,
+        resetSession
+    }), [session, isLoading, audioUrls, startSession, nextQuestion, goToQuestion, loadTipsForQuestion, saveAnswer, clearAnswer, updateAnswerAnalysis, cacheAudioUrl, finishSession, resetSession]);
 
     return (
-        <SessionContext.Provider value={{ session, isLoading, startSession, nextQuestion, saveAnswer, resetSession, loadTipsForQuestion, goToQuestion, updateAnswerAnalysis, finishSession }}>
+        <SessionContext.Provider value={contextValue}>
             {children}
         </SessionContext.Provider>
     );
 };
-
-// Hook moved to src/hooks/useSessionContext.ts

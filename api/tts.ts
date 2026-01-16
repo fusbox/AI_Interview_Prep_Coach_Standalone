@@ -63,8 +63,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing "text" in request body' });
     }
 
-    if (text.length > 200) {
-      return res.status(400).json({ error: 'Text too long. Maximum 200 characters allowed.' });
+    if (text.length > 250) {
+      return res.status(400).json({ error: 'Text too long. Maximum 250 characters allowed.' });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
-              voiceName: 'Aoede'
+              voiceName: 'Sulafat'
             }
           }
         }

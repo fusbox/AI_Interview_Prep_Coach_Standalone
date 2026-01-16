@@ -1,49 +1,69 @@
-# Interview Coach
+# AI Interview Coach: Ready2Work
 
-A robust, voice-activated interview preparation tool designed to help job seekers practice, refine, and master their interview skills.
+**Master your next interview with hyper-realistic AI coaching.**
+Ready2Work's Interview Coach is a production-grade interview preparation platform that uses advanced AI to simulate real interview scenarios, analyze your verbal performance, and provide competent, actionable feedback.
 
-Built with **React**, **Supabase**, and powered by **Google's Gemini 2.5 Flash**, this application provides a realistic mock interview experience with real-time, constructive AI feedback on both content and delivery.
+![Dashboard Preview](./public/dashboard-preview.png) *(Note: Placeholder for actual screenshot)*
 
-## 🚀 Features
+## 🚀 Key Features
 
-*   **Custom Job Prep:**
-    *   **Role Selection:** Choose from pre-defined roles (Data Analytics, UX Design, etc.).
-    *   **Job Description Input:** Paste a specific job description to generate highly tailored questions.
-*   **Hybrid Interview Interface:**
-    *   **Voice-First:** Answer verbal questions simulating a real call.
-    *   **Text Support:** Type your answers if you prefer non-verbal practice.
-    *   **SaaS-Quality TTS:** Questions are read aloud by a hyper-realistic AI voice (Gemini Audio).
-*   **Real-Time AI Analysis:**
-    *   **Content Feedback:** STAR method analysis, clarity checks, and relevance scoring.
-    *   **Delivery Analysis:** Vocal pace, tone, and confidence evaluation.
-    *   **Scoring:** "Strong", "Good", or "Needs Practice" ratings.
-*   **Guest & User Modes:**
-    *   **Teaser Mode:** Guests can try one full interview session for free.
-    *   **Authenticated Access:** Sign up via Email/Password to verify email and save history.
-*   **Session Insights:**
-    *   **Readiness Score:** Visualizes your overall preparedness.
-    *   **History:** Review past sessions and track improvement over time.
+### 🧠 Competency-Driven Intelligence
+*   **Dynamic Blueprints**: Every session generates a unique "Competency Blueprint" based on the specific Job Role or Description.
+*   **Targeted Questioning**: Questions are generated to probe specific skills (e.g., "Conflict Resolution" for PMs, "System Design" for Engineers).
+*   **Adaptive Reading Level**: Questions and feedback automatically adapt tone and complexity to match the role (Entry-level vs. Executive).
+
+### 🎙️ Immersive "Glass" Interface
+*   **Voice-First Interaction**: Speak your answers naturally. The AI utilizes **Speech-to-Text** to transcribe and analyze your response in real-time.
+*   **AI Voice**: Questions are narrated by a lifelike AI voice (Google Gemini Audio) for a true conversational feel.
+*   **Premium UI**: Built with a modern, dark-mode "Glassmorphism" aesthetic using Tailwind CSS and Framer Motion.
+
+### 📊 Deep Performance Analysis
+Unlike generic tools, Ready2Work provides granular, structured feedback:
+*   **Dimension Scoring**: Scores you on specific competencies (e.g., "Technical Depth", "Communication") relevant *only* to the question asked.
+*   **Logical Feedback Chain**:
+    1.  **Missing Signals**: Identifies key professional concepts you missed.
+    2.  **One Big Upgrade**: select the single most critical gap to fix.
+    3.  **"Try Saying This"**: Generates a script demonstrating exactly how to fix that upgrade.
+*   **Conditional Depth**:
+    *   **High Scores (80+)**: Brief validation.
+    *   **Mid Scores (60-79)**: Validation + 1 actionable tip.
+    *   **Low Scores (<60)**: Detailed remediation advice.
+
+### 📈 Dashboard & History
+*   **Session Persistence**: All sessions are saved (Supabase for users, Local Encrypted Storage for guests).
+*   **Accordion Insights**: Expand any past session directly from the dashboard to review full transcripts and AI analysis without leaving the page.
+*   **Resume Builder**: (Beta) Integrated tools to help you get ready for the application phase.
+
+---
 
 ## 🛠️ Tech Stack
 
-*   **Framework:** React 19 (Vite)
-*   **Language:** TypeScript
-*   **Styling:** Tailwind CSS v4 + Shadcn/UI
-*   **Backend/Auth:** Supabase
-*   **AI Models:** Google Gemini 2.5 Flash (Text & Audio)
+### Frontend
+*   **Framework**: [React 19](https://react.dev/) (Vite)
+*   **Language**: [TypeScript](https://www.typescriptlang.org/)
+*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + Custom Glass UI System
+*   **Animation**: [Framer Motion](https://www.framer.com/motion/)
+*   **Icons**: [Lucide React](https://lucide.dev/)
+
+### Backend & AI
+*   **AI Model**: [Google Gemini 2.5 Flash](https://deepmind.google/technologies/gemini/) (Multimodal: Audio/Text)
+*   **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL + GoTrue)
+*   **Serverless**: Vercel Serverless Functions (`/api`)
+
+---
 
 ## 📦 Installation & Setup
 
 ### Prerequisites
 *   Node.js (v18+)
-*   A Supabase Project (Free Tier works)
-*   A Google Gemini API Key
+*   Gemini API Key (Google AI Studio)
+*   Supabase Project (URL + Anon Key)
 
-### Steps
+### Quick Start
 
 1.  **Clone the repository**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/yourusername/ai-interview-coach.git
     cd ai-interview-coach
     ```
 
@@ -52,51 +72,44 @@ Built with **React**, **Supabase**, and powered by **Google's Gemini 2.5 Flash**
     npm install
     ```
 
-3.  **Configure Environment Variables**
-    Create a `.env` file in the root directory:
+3.  **Environment Configuration**
+    Create a `.env` file in the root based on `.env.example`:
     ```env
     # Supabase (Auth & Data)
-    VITE_SUPABASE_URL=your_supabase_url
-    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    VITE_SUPABASE_URL=https://your-project.supabase.co
+    VITE_SUPABASE_ANON_KEY=your-anon-key-here
     
-    # AI (Server-side functions)
-    GEMINI_API_KEY=your_gemini_api_key
+    # Google Gemini AI (Server-side)
+    GEMINI_API_KEY=your-gemini-key-here
     ```
 
-4.  **Run the Development Server**
+4.  **Run Locally**
     ```bash
     npm run dev
     ```
-    Open `http://localhost:3000` in your browser.
+    Visit `http://localhost:5173` to start practicing.
 
-## 📖 Usage Guide
-
-1.  **Start:** 
-    *   Select a **Role** (e.g., "Project Manager") OR
-    *   Click **"Use Custom Job Description"** to input a specific JD.
-2.  **Answer:** 
-    *   Listen to the question (or read it).
-    *   Click the **Mic** to record your answer, or switch to **Text** mode to type.
-3.  **Review:** 
-    *   Get instant feedback on your answer's structure and delivery.
-    *   Click "Retry" to improve your score immediately.
-4.  **Summary:** 
-    *   Complete the session to see your final **Readiness Score**.
-    *   Guests will be prompted to sign up to save this data.
+---
 
 ## 📂 Project Structure
 
 ```
 /src
- ├── /api          # Serverless functions (TTS)
- ├── /components   # UI components (Shadcn cards, buttons, etc.)
- ├── /context      # Global state (Auth, Session)
- ├── /hooks        # Custom React hooks
- ├── /pages        # Route views (RoleSelection, Interview, etc.)
- ├── /services     # External services (Supabase, Gemini)
- └── main.tsx      # Entry point
+ ├── /api            # Serverless functions (Gemini interaction)
+ ├── /components     
+ │    ├── /ui/glass  # Custom Glassmorphic Component Library
+ │    └── ...
+ ├── /pages          # Key Views (Dashboard, Interview, Review)
+ ├── /services       # Logic Layers (Storage, Gemini, Audio)
+ ├── /types          # Shared TypeScript Interfaces (Blueprints, Analysis)
+ └── /utils          # Helpers (Encryption, Auth)
 ```
 
-## 🛡️ License
+## 🔒 Privacy & Security
 
+*   **Audio Privacy**: Raw user audio is processed for transcription and then **immediately discarded**. It is never stored permanently.
+*   **Guest Mode**: Guest data is stored in **Local Storage** using AES encryption and never touches the cloud database.
+*   **Authenticated Mode**: User data is secured via Supabase Row Level Security (RLS).
+
+## 📄 License
 MIT

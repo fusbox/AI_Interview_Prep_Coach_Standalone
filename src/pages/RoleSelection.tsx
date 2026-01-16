@@ -26,8 +26,8 @@ const RoleSelection: React.FC = () => {
     const selectRole = async (role: string) => {
         setProcessingState({ isActive: true, text: 'Preparing your interview...' });
         try {
-            await startSession(role);
-            navigate('/interview');
+            // await startSession(role); // Moved to InterviewSetup
+            navigate('/interview', { state: { role } });
         } catch (e) {
             console.error(e);
             setError("Failed to generate questions. Please try again.");

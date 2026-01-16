@@ -3,7 +3,7 @@ import { cn } from '../../../lib/utils';
 import { motion } from 'framer-motion';
 
 interface GlassButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'outline' | 'ghost';
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
     size?: 'sm' | 'md' | 'lg';
 }
 
@@ -11,6 +11,7 @@ export const GlassButton = React.forwardRef<HTMLButtonElement, GlassButtonProps>
     ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
         const variants = {
             primary: "bg-linear-to-r from-cyan-500/80 to-blue-600/80 hover:from-cyan-400 hover:to-blue-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] border-none",
+            secondary: "bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10",
             outline: "bg-transparent border border-white/20 hover:bg-white/5 text-white",
             ghost: "bg-transparent hover:bg-white/5 text-gray-300 hover:text-white border-none",
         };

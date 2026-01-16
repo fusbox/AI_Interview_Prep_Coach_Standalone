@@ -80,7 +80,7 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream, isRecording }
       ref={canvasRef}
       width={300}
       height={100}
-      className="w-full h-32 rounded-xl bg-blue-50/50"
+      className="w-full h-32 rounded-xl bg-transparent"
     />
   );
 };

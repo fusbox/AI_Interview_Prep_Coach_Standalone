@@ -1,37 +1,74 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { LayoutDashboard, Mic, Settings, LogOut, User, Menu } from 'lucide-react';
+import { LayoutDashboard, Mic, Settings, LogOut, User, Menu, FileText, GraduationCap } from 'lucide-react';
 import { GlassButton } from '../components/ui/glass/GlassButton';
+import { supabase } from '../services/supabase';
+import { useAuth } from '../context/AuthContext';
 
 export const DashboardLayout: React.FC = () => {
     const location = useLocation();
-    const [sidebarOpen, setSidebarOpen] = React.useState(true);
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        if (location.pathname.startsWith('/interview')) {
+            document.title = "Interview Coach";
+        } else if (location.pathname.startsWith('/review')) {
+            document.title = "Interview Review";
+        } else if (location.pathname === '/settings') {
+            document.title = "Settings";
+        } else if (location.pathname === '/resume-builder') {
+            document.title = "Resume Builder";
+        } else if (location.pathname === '/training') {
+            document.title = "Training";
+        } else {
+            document.title = "Dashboard";
+        }
+    }, [location.pathname]);
 
     const navItems = [
         { label: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-        { label: 'Interview Prep', icon: <Mic size={20} />, path: '/dashboard/interview' },
-        { label: 'Settings', icon: <Settings size={20} />, path: '/dashboard/settings' },
+        { label: 'Training', icon: <GraduationCap size={20} />, path: '/training' },
+        { label: 'Resume Builder', icon: <FileText size={20} />, path: '/resume-builder' },
+        { label: 'Interview Coach', icon: <Mic size={20} />, path: '/interview' },
+        { label: 'Settings', icon: <Settings size={20} />, path: '/settings' },
     ];
 
     return (
-        <div className="min-h-screen flex bg-zinc-950 text-white overflow-hidden relative">
+        <div className="h-screen flex bg-zinc-950 text-white overflow-hidden relative">
             {/* Background Blobs (Global for Dashboard) */}
             <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" />
             <div className="fixed bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
 
+            {/* Mobile Backdrop */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden animate-fade-in"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 glass-panel border-r border-white/10 transition-transform duration-300 md:translate-x-0",
-                    !sidebarOpen && "-translate-x-full md:translate-x-0" // Mobile toggle logic
+                    "fixed inset-y-0 left-0 z-50 w-64 border-r border-white/10 transition-transform duration-300 md:translate-x-0",
+                    "bg-zinc-950/90 backdrop-blur-xl md:glass-panel md:bg-transparent", // Mobile: Opaque/Frosted. Desktop: Standard Glass.
+                    !sidebarOpen && "-translate-x-full md:translate-x-0"
                 )}
             >
                 <div className="h-full flex flex-col p-4">
-                    <div className="h-16 flex items-center px-2 mb-8">
-                        <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-cyan-400 to-purple-500">
-                            Ready2Work
-                        </span>
+                    <div className="h-16 flex items-center justify-between px-2 mb-8">
+                        <Link to="/" className="text-xl font-bold text-white tracking-tight font-display">
+                            Ready<span className="text-cyan-400">2</span>Work
+                        </Link>
+                        <button
+                            onClick={() => setSidebarOpen(false)}
+                            className="md:hidden text-gray-400 hover:text-white"
+                        >
+                            <Menu size={24} className="rotate-90" /> {/* Or X icon */}
+                        </button>
                     </div>
 
                     <nav className="flex-1 space-y-2">
@@ -58,7 +95,15 @@ export const DashboardLayout: React.FC = () => {
                     </nav>
 
                     <div className="mt-auto pt-4 border-t border-white/5">
-                        <GlassButton variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                        <GlassButton
+                            variant="ghost"
+                            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                localStorage.clear(); // Clear all session data
+                                navigate('/');
+                            }}
+                        >
                             <LogOut size={18} className="mr-3" />
                             Sign Out
                         </GlassButton>
@@ -68,7 +113,7 @@ export const DashboardLayout: React.FC = () => {
 
             {/* Main Content */}
             <main className={cn(
-                "flex-1 flex flex-col transition-all duration-300 relative z-10",
+                "flex-1 flex flex-col transition-all duration-300 relative z-10 min-w-0",
                 "md:ml-64"
             )}>
                 {/* Header */}
@@ -83,8 +128,7 @@ export const DashboardLayout: React.FC = () => {
 
                     <div className="flex items-center gap-4">
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-medium text-white">John Doe</p>
-                            <p className="text-xs text-gray-400">Basic Plan</p>
+                            <p className="text-sm font-medium text-white">{user?.email}</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-linear-to-tr from-cyan-500 to-purple-500 p-[2px]">
                             <div className="w-full h-full rounded-full bg-zinc-900 flex items-center justify-center">
@@ -95,7 +139,7 @@ export const DashboardLayout: React.FC = () => {
                 </header>
 
                 {/* Page Content */}
-                <div className="p-6 md:p-8 flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-6 md:p-8">
                     <Outlet />
                 </div>
             </main>

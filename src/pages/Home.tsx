@@ -1,71 +1,118 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGuestTracker } from '../hooks/useGuestTracker';
+import { GlassCard } from '../components/ui/glass/GlassCard';
+import { GlassButton } from '../components/ui/glass/GlassButton';
+import { GraduationCap, FileText, Mic, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-import { ROLE_IMAGES } from '../lib/constants';
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
-    const { hasCompletedSession } = useGuestTracker();
-    const { user } = useAuth();
+    const { user } = useAuth(); // If this fails, check context provider wrapping
 
-    // Preload images for RoleSelection page
-    useEffect(() => {
-        Object.values(ROLE_IMAGES).forEach(src => {
-            const img = new Image();
-            img.src = src;
-        });
+    React.useEffect(() => {
+        document.title = "Ready2Work";
     }, []);
 
-    const handleStart = () => {
-        // If user is guest AND has already done a session -> force auth
-        if (!user && hasCompletedSession) {
-            navigate('/auth?mode=signup'); // Direct new hook to signup
+    const handlePlaceholder = (module: string) => {
+        // Simple alert for now, could be a toast in production
+        alert(`${module} module is coming soon!`);
+    };
+
+    const handlePracticeClick = () => {
+        if (user) {
+            navigate('/dashboard');
         } else {
-            navigate('/select-role');
+            navigate('/auth');
         }
     };
 
     return (
-        <div className="h-full w-full flex flex-col items-center justify-center p-6 bg-slate-50 relative overflow-hidden">
-            <div className="max-w-3xl text-center z-10 flex flex-col items-center">
-                <div className="mb-8 p-6">
-                    <img
-                        src="/ready2work.svg"
-                        alt="Ready2Work"
-                        className="h-24 w-auto object-contain"
-                    />
-                </div>
-
-                <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 tracking-tight">
-                    Interview Coach
-                </h1>
-                <p className="text-xl text-slate-600 mb-12 max-w-xl mx-auto leading-relaxed">
-                    Master your interview skills with real-time AI feedback. Practice key questions, refine your answers, and build confidence.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button
-                        onClick={handleStart}
-                        className="px-10 py-4 bg-[#376497] border-2 border-transparent hover:bg-transparent hover:text-[#0B8039] hover:border-[#0B8039] text-white font-semibold rounded-lg shadow-lg shadow-blue-900/10 transition-all hover:-translate-y-1"
-                    >
-                        {(!user && hasCompletedSession) ? "Sign Up or Login" : "Start Practicing"}
-                    </button>
-                    {user && (
-                        <button
-                            onClick={() => navigate('/dashboard')}
-                            className="px-10 py-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-lg shadow-slate-200 transition-all hover:-translate-y-1"
-                        >
-                            View History
-                        </button>
-                    )}
-                </div>
+        <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-zinc-950 font-sans selection:bg-cyan-500/30">
+            {/* Background Atmosphere */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-purple-900/20 rounded-full blur-[120px] animate-pulse-slow" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-cyan-900/20 rounded-full blur-[100px] delay-1000 animate-pulse-slow" />
+                <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay"></div>
             </div>
 
-            {/* Decorative background elements */}
-            <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-rangam-blue/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse"></div>
-            <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-rangam-green/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse" style={{ animationDelay: '1s' }}></div>
+            <div className="relative z-10 w-full max-w-5xl px-4 md:px-6">
+
+                {/* Hero Section */}
+                <div className="text-center mb-16 animate-fade-in-up">
+
+
+                    <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight font-display">
+                        Ready<span className="text-cyan-400">2</span>Work
+                    </h1>
+                    <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                        Your all-in-one platform for career success. Build skills, craft the perfect resume, and master your interview technique.
+                    </p>
+                </div>
+
+                {/* Modules Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    {/* Training Module */}
+                    <GlassCard
+                        className="p-8 flex flex-col items-center text-center group hover:bg-white/5 transition-all duration-300 border-white/5 hover:border-white/10"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-linear-to-br from-amber-500/20 to-orange-600/20 flex items-center justify-center mb-6 border border-amber-500/20 group-hover:scale-110 transition-transform duration-300">
+                            <GraduationCap size={32} className="text-amber-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Training</h3>
+                        <p className="text-gray-400 text-sm mb-8 flex-1">
+                            Access our extensive e-learning library to upskill and certifications to boost your profile.
+                        </p>
+                        <GlassButton
+                            variant="secondary"
+                            onClick={() => user ? navigate('/training') : navigate('/auth')}
+                            className="w-full"
+                        >
+                            Start Learning
+                        </GlassButton>
+                    </GlassCard>
+
+                    {/* Resume Builder Module */}
+                    <GlassCard
+                        className="p-8 flex flex-col items-center text-center group hover:bg-white/5 transition-all duration-300 border-white/5 hover:border-white/10"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-linear-to-br from-emerald-500/20 to-teal-600/20 flex items-center justify-center mb-6 border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+                            <FileText size={32} className="text-emerald-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Resume Builder</h3>
+                        <p className="text-gray-400 text-sm mb-8 flex-1">
+                            Create professional, ATS-friendly resumes in minutes with our AI-powered builder.
+                        </p>
+                        <GlassButton
+                            variant="secondary"
+                            onClick={() => user ? navigate('/resume-builder') : navigate('/auth')}
+                            className="w-full"
+                        >
+                            Start Building
+                        </GlassButton>
+                    </GlassCard>
+
+                    {/* Interview Prep Module (Active) */}
+                    <GlassCard
+                        className="p-8 flex flex-col items-center text-center group hover:bg-white/5 transition-all duration-300 border-cyan-500/30 hover:border-cyan-400/50 shadow-[0_0_30px_rgba(6,182,212,0.1)] hover:shadow-[0_0_40px_rgba(6,182,212,0.2)]"
+                    >
+                        <div className="w-16 h-16 rounded-full bg-linear-to-br from-cyan-500/20 to-purple-600/20 flex items-center justify-center mb-6 border border-cyan-500/20 group-hover:scale-110 transition-transform duration-300">
+                            <Mic size={32} className="text-cyan-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-3">Interview Coach</h3>
+                        <p className="text-gray-400 text-sm mb-8 flex-1">
+                            Practice with an AI coach that provides real-time feedback on your delivery and answers.
+                        </p>
+                        <GlassButton
+                            onClick={() => navigate('/dashboard')}
+                            className="w-full group/btn"
+                        >
+                            Start Practicing <ArrowRight size={16} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                        </GlassButton>
+                    </GlassCard>
+
+                </div>
+            </div>
         </div>
     );
 };

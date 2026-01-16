@@ -6,14 +6,22 @@ export function useRecording() {
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [duration, setDuration] = useState(0);
 
+    const [error, setError] = useState<string | null>(null);
+
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<BlobPart[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     const startRecording = async (): Promise<void> => {
         try {
+            setError(null);
             setAudioBlob(null);
             setDuration(0);
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error("Microphone API not supported. Ensure you are using HTTPS or localhost.");
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             setMediaStream(stream);
 
@@ -39,14 +47,21 @@ export function useRecording() {
 
         } catch (err) {
             console.error("Error accessing microphone:", err);
-            throw new Error("Microphone access required");
+            let errorMessage = "Microphone access failed.";
+            if (err instanceof Error) {
+                errorMessage = err.message;
+                if (err.name === 'NotAllowedError') errorMessage = "Microphone permission denied.";
+                if (err.name === 'NotFoundError') errorMessage = "No microphone found.";
+            }
+            setError(errorMessage);
+            // Don't throw here to avoid unhandled promise rejections in UI, rely on error state
         }
     };
 
     const stopRecording = (): Promise<Blob> => {
         return new Promise((resolve, reject) => {
             if (!mediaRecorderRef.current || !isRecording) {
-                reject(new Error("Not recording"));
+                // Determine if we should treat this as an error or just ignore
                 return;
             }
 
@@ -83,6 +98,7 @@ export function useRecording() {
         mediaStream,
         audioBlob,
         duration,
+        error,
         startRecording,
         stopRecording
     };

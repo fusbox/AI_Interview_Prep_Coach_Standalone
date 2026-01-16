@@ -1,49 +1,4 @@
-import { Question, AnalysisResult, QuestionTips } from "../types";
-
-// --- Helpers ---
-
-// --- Mock Data Generators ---
-
-const mockQuestions = (role: string): Question[] => [
-  { id: '1', text: `Tell me about a time you faced a challenge in ${role}.` },
-  { id: '2', text: `Why are you interested in a career in ${role}?` },
-  { id: '3', text: "Describe a successful project you worked on." },
-];
-
-const mockTips = (role: string): QuestionTips => ({
-  lookingFor: "The interviewer wants to see your problem-solving process and resilience.",
-  pointsToCover: ["The specific situation", "The action you took", "The positive result"],
-  answerFramework: "Use the STAR method (Situation, Task, Action, Result) to structure your response.",
-  industrySpecifics: {
-    metrics: "Efficiency improvement, cost reduction",
-    tools: "Jira, Trello, Slack"
-  },
-  mistakesToAvoid: ["Blaming others", "Being vague about your contribution", "Focusing too much on the problem instead of the solution"],
-  proTip: "Turn the challenge into a learning opportunity."
-});
-
-const mockAnalysis = (): AnalysisResult => ({
-  transcript: "This is a simulated transcript because the API call failed or no key was provided. I talked about my experience with leading teams and solving complex data problems.",
-  feedback: [
-    "Try to use the STAR method (Situation, Task, Action, Result) more explicitly.",
-    "Your tone was confident, which is great.",
-    "Mention specific tools or technologies you utilized."
-  ],
-  keyTerms: ["Leadership", "Data Analysis", "Problem Solving"],
-  rating: "Developing",
-  deliveryStatus: "Clear & Paced",
-  deliveryTips: ["Good volume, but try to vary your pitch to sound more engaging.", "Pace was steady and easy to follow."],
-  strongResponse: "A strong response would clearly articulate the situation, task, action, and result, demonstrating leadership and technical skills.",
-  whyThisWorks: {
-    lookingFor: "Demonstrates clear leadership.",
-    pointsToCover: ["Situation clearly described", "Action detailed", "Result quantified"],
-    answerFramework: "Follows STAR perfectly.",
-    industrySpecifics: { metrics: "Mentioned 20% growth", tools: "Used Python and SQL" },
-    mistakesToAvoid: ["Did not blame others", "Was specific"],
-    proTip: "Showed growth mindset."
-  }
-});
-
+import { Question, AnalysisResult, QuestionTips, CompetencyBlueprint, QuestionPlan } from "../types";
 import { supabase } from "./supabase";
 
 // --- Helpers ---
@@ -67,16 +22,74 @@ export const blobToBase64 = (blob: Blob): Promise<string> => {
 
 // --- API Functions ---
 
-export const generateQuestions = async (role: string, jobDescription?: string): Promise<Question[]> => {
+export const generateBlueprint = async (role: string, jobDescription?: string, seniority?: string): Promise<CompetencyBlueprint | null> => {
+  try {
+    const authHeaders = await getAuthHeader();
+    const response = await fetch('/api/generate-blueprint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ role, jobDescription, seniority })
+    });
+
+    if (!response.ok) {
+      console.error(`Blueprint generation failed: ${response.status}`);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating blueprint:", error);
+    return null;
+  }
+};
+
+export const initSession = async (role: string, jobDescription?: string) => {
+  try {
+    const authHeaders = await getAuthHeader();
+    const response = await fetch('/api/init-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ role, jobDescription })
+    });
+    if (!response.ok) throw new Error("Init session failed");
+    return await response.json();
+  } catch (error) {
+    console.error("Error initializing session:", error);
+    return null;
+  }
+};
+
+export const generateQuestionPlan = async (blueprint: CompetencyBlueprint): Promise<QuestionPlan | null> => {
+  try {
+    const authHeaders = await getAuthHeader();
+    const response = await fetch('/api/generate-question-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ blueprint })
+    });
+
+    if (!response.ok) {
+      console.error(`Question plan generation failed: ${response.status}`);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating question plan:", error);
+    return null;
+  }
+};
+
+export const generateQuestions = async (role: string, jobDescription?: string, questionPlan?: QuestionPlan, blueprint?: CompetencyBlueprint, subsetIndices?: number[]): Promise<Question[]> => {
   try {
     const authHeaders = await getAuthHeader();
     const response = await fetch('/api/generate-questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ role, jobDescription })
+      body: JSON.stringify({ role, jobDescription, questionPlan, blueprint, subsetIndices })
     });
 
     if (!response.ok) {
+      // Fallback to local mock if server fails (or dev mode without key)
+      console.warn(`Server error ${response.status} for questions. Using fallback.`);
       throw new Error(`Server error: ${response.status}`);
     }
 
@@ -84,7 +97,12 @@ export const generateQuestions = async (role: string, jobDescription?: string): 
     return questions as Question[];
   } catch (error) {
     console.error("Error generating questions:", error);
-    return mockQuestions(role);
+    // Minimal fallback
+    return [
+      { id: '1', text: `Tell me about a time you faced a challenge in ${role}.` },
+      { id: '2', text: `Why are you interested in a career in ${role}?` },
+      { id: '3', text: "Describe a successful project you worked on." },
+    ];
   }
 };
 
@@ -105,15 +123,20 @@ export const generateQuestionTips = async (question: string, role: string): Prom
     return tips as QuestionTips;
   } catch (error) {
     console.error("Error generating tips:", error);
-    return mockTips(role);
+    return {
+      lookingFor: "General professional competence.",
+      pointsToCover: ["Situation", "Action", "Result"],
+      answerFramework: "STAR Method",
+      industrySpecifics: { metrics: "N/A", tools: "N/A" },
+      mistakesToAvoid: ["Being vague"],
+      proTip: "Be confident."
+    };
   }
 };
 
-// Reverted to fast analysis (no tips needed)
-// Reverted to fast analysis (no tips needed)
-export const analyzeAnswer = async (question: string, input: Blob | string): Promise<AnalysisResult> => {
+export const analyzeAnswer = async (question: string, input: Blob | string, blueprint?: CompetencyBlueprint, questionId?: string): Promise<AnalysisResult> => {
   try {
-    let payload: any = { question };
+    let payload: any = { question, blueprint, questionId };
 
     if (typeof input === 'string') {
       payload.input = input;
@@ -141,7 +164,16 @@ export const analyzeAnswer = async (question: string, input: Blob | string): Pro
     return result as AnalysisResult;
   } catch (error) {
     console.error("Error analyzing answer:", error);
-    return mockAnalysis();
+    // Return minimal fallback to avoid crashing UI
+    return {
+      transcript: typeof input === 'string' ? input : "Audio processing unavailable.",
+      feedback: ["System is currently offline. Please try again later."],
+      rating: "Developing",
+      keyTerms: [],
+      coachReaction: "Keep practicing!",
+      strongResponse: "System offline.",
+      whyThisWorks: { lookingFor: "", pointsToCover: [], answerFramework: "", industrySpecifics: { metrics: "", tools: "" }, mistakesToAvoid: [], proTip: "" }
+    };
   }
 };
 
@@ -171,6 +203,14 @@ export const generateStrongResponse = async (question: string, tips: QuestionTip
 
 export const generateSpeech = async (text: string): Promise<string | null> => {
   if (!text.trim()) return null;
+
+  // Mock TTS Bypass
+  if (import.meta.env.VITE_MOCK_TTS === 'true') {
+    console.log("[TTS] Mock Mode Active: Returning silent audio.");
+    // Return a short silent audio duration to simulate playback (1 second silent MP3)
+    // using a data URI for a tiny silent MP3
+    return "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAAP//OEAAAAAAAAAAAAAAAAAAAAAAAGGluZwAAAA8AAAAEAAABIAAAzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMz//////////////////////////////////////////////////////////////////wAAAP//OEAAAAAAAAAAAAAAAAAAAAAATEFNRTMuMTAwqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//OEAAABAAAA0gAAABRaaaaaaaaAAIgAAADSAAAAFE0AAAAAAAD78wAAAQD78wAAAQAAAP//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////OEAAAAAAAANIAAAAUWAAAAAAAACIAAAA0gAAABRgAAAAAAABAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAAB//OEAAAAAAAANIAAAAUWAAAAAAAACIAAAA0gAAABRhAAAAAAABAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAABwAAAAcAAAAHAAAAB";
+  }
 
   try {
     const authHeaders = await getAuthHeader();

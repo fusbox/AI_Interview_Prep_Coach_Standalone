@@ -1,0 +1,94 @@
+# Decision Log (ADR-lite)
+
+Purpose:
+- Capture architecturally significant decisions
+- Provide "why" alongside "what"
+- Make senior engineer review easy
+- Enable reversal without confusion (decisions can be superseded, not deleted)
+
+Format:
+- Keep entries small
+- Include alternatives considered
+- Include consequences / tradeoffs
+
+---
+
+## Template
+
+### [0001] <Decision Title>
+**Status:** Accepted | Superseded | Rejected  
+**Date:** YYYY-MM-DD  
+
+**Context:**
+- What requirement or constraint triggered this decision?
+
+**Decision:**
+- What are we doing?
+
+**Alternatives considered:**
+1)
+2)
+3)
+
+**Why this choice:**
+- Why is this best given our constraints?
+
+**Consequences / tradeoffs:**
+- Pros:
+- Cons:
+- Follow-ups:
+
+**Revisit if:**
+- What conditions would change this decision?
+
+---
+
+## Decisions
+
+### [0001] Example: Use JSONL for agent tool tracing logs
+**Status:** Accepted  
+**Date:** YYYY-MM-DD  
+
+**Context:**
+We need append-only logs that can be parsed line-by-line during agent loops.
+
+**Decision:**
+Store tool calls in `.ralph/tool_trace.jsonl` (newline-delimited JSON objects).
+
+**Alternatives considered:**
+1) Single JSON array file rewritten each loop
+2) Plain text logs only
+
+**Why this choice:**
+JSON Lines supports incremental writing and streaming processing.
+
+**Consequences / tradeoffs:**
+- Pros: append-only, easy to parse per record
+- Cons: not “one valid JSON document” end-to-end
+
+**Revisit if:**
+We require strict JSON documents for ingestion into a system that rejects JSONL.
+
+### [0002] Add Unique ID to InterviewSession
+**Status:** Accepted
+**Date:** 2026-01-13
+
+**Context:**
+Users reported "ghosting" where old session state (answers/transcripts) appeared in new sessions. The existing `InterviewSession` type lacked a unique identifier to reliably distinguish strictly between "reset" sessions and "new" sessions across component mounts.
+
+**Decision:**
+Add an optional `id` fields (UUID) to the `InterviewSession` interface.
+
+**Alternatives considered:**
+1) Rely on `currentQuestionIndex === 0` (fragile)
+2) Rely on `answers` object emptiness (unreliable if persistence lags)
+
+**Why this choice:**
+Explicit ID allows components to subscribe to `session.id` changes and force-reset local state immediately.
+
+**Consequences / tradeoffs:**
+- Pros: Deterministic cleanup triggers.
+- Cons: Minor migration friction for existing persisted sessions (optional field mitigates this).
+
+**Revisit if:**
+We move to a fully server-side session management model where local ID is irrelevant.
