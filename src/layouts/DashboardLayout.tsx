@@ -37,10 +37,10 @@ export const DashboardLayout: React.FC = () => {
     ];
 
     return (
-        <div className="h-screen flex bg-zinc-950 text-white overflow-hidden relative">
+        <div className="h-screen flex text-white overflow-hidden relative">
             {/* Background Blobs (Global for Dashboard) */}
-            <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="fixed bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="fixed top-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none hidden md:block" />
+            <div className="fixed bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none hidden md:block" />
 
             {/* Mobile Backdrop */}
             {sidebarOpen && (
@@ -78,14 +78,7 @@ export const DashboardLayout: React.FC = () => {
                     }}
                 >
                     <div className="h-16 flex items-center justify-between px-2 mb-8">
-                        {/* Branding - Hidden on mobile per user request if they considered sidebar "main section", or maybe they meant the header? 
-                            If the user meant "upper left of main section" and the sidebar is the "left navbar", maybe they mean the branding IN the sidebar.
-                            I will assume hiding it on mobile (logo only?) or just hiding the text.
-                            Let's keep it consistent: The user said "Remove...". Use `hidden md:block` for the text? 
-                            Actually, the user said "Left navbar drawer...".
-                            Let's hide the text on mobile for now.
-                        */}
-                        <Link to="/" className="text-xl font-bold text-white tracking-tight font-display md:block hidden">
+                        <Link to="/" className="text-xl font-bold text-white tracking-tight font-display">
                             Ready<span className="text-cyan-400">2</span>Work
                         </Link>
                         {/* On mobile, if text is hidden, show X aligned left or right? 
@@ -169,7 +162,11 @@ export const DashboardLayout: React.FC = () => {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-y-auto p-6 md:p-8">
+                <div className={cn(
+                    "flex-1 overflow-y-auto",
+                    // Remove padding and scroll for active session to allow full-screen layout
+                    location.pathname.includes('/session') ? "p-0 overflow-hidden flex flex-col" : "p-6 md:p-8"
+                )}>
                     <Outlet />
                 </div>
             </main>

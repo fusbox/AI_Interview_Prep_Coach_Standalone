@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SessionContext } from '../context/SessionContext';
-import { Mic, MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, List, Lightbulb, Play, ArrowRight, Volume2, RotateCcw } from 'lucide-react';
+import { Mic, MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, List, Lightbulb, Play, ArrowRight, Volume2, RotateCcw, X } from 'lucide-react';
 import { GlassCard } from '../components/ui/glass/GlassCard';
 import { GlassButton } from '../components/ui/glass/GlassButton';
 import { cn } from '../lib/utils';
@@ -438,8 +438,28 @@ export const InterviewSession: React.FC = () => {
 
     // Handle initial loading or empty state
     if (!currentQuestion) {
+        // If loading finished but no questions, it's an error
+        if (!sessionCtx.isLoading && !isStarting) {
+            return (
+                <div className="h-screen flex flex-col items-center justify-center text-white font-sans p-8">
+                    <div className="text-red-500 mb-4">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Failed to Start Session</h2>
+                    <p className="text-gray-400 text-center mb-6">We couldn't generate the interview questions. Please try again.</p>
+                    <GlassButton onClick={() => navigate('/interview')}>
+                        Back to Setup
+                    </GlassButton>
+                </div>
+            );
+        }
+
         return (
-            <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
+            <div className="h-dvh flex flex-col text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
                 {/* Force Loader if no question data yet */}
                 <SessionLoader
                     isLoading={true}
@@ -450,7 +470,7 @@ export const InterviewSession: React.FC = () => {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
+        <div className="h-dvh flex flex-col text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
             {/* Session Loader Overlay */}
             <SessionLoader
                 isLoading={false}
@@ -458,7 +478,7 @@ export const InterviewSession: React.FC = () => {
             />
 
             {/* Background Atmosphere */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="fixed inset-0 z-0 pointer-events-none hidden md:block">
                 <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-cyan-900/10 rounded-full blur-[120px] animate-pulse-slow" />
                 <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[100px] delay-1000 animate-pulse-slow" />
                 <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay"></div>
@@ -469,8 +489,53 @@ export const InterviewSession: React.FC = () => {
                 <>
                     {/* Header */}
                     <header className="h-16 border-b border-white/5 bg-zinc-950/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 relative z-20">
+                        {/* Mobile: Tips Left */}
+                        <div className="md:hidden">
+                            <button
+                                onClick={() => {
+                                    if (showMobileTips) {
+                                        setShowMobileTips(false);
+                                    } else {
+                                        setShowMobileTips(true);
+                                        setShowMobileQuestions(false);
+                                    }
+                                }}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 border",
+                                    showMobileTips
+                                        ? "bg-white/10 text-white border-white/10"
+                                        : "bg-black/20 text-gray-400 hover:text-gray-200 border-transparent"
+                                )}
+                            >
+                                {showMobileTips ? <X size={14} /> : <Lightbulb size={14} className="text-amber-400" />}
+                                <span>Tips & Transcript</span>
+                            </button>
+                        </div>
 
                         <div className="flex items-center gap-4">
+                            {/* Mobile: Questions Right */}
+                            <div className="md:hidden">
+                                <button
+                                    onClick={() => {
+                                        if (showMobileQuestions) {
+                                            setShowMobileQuestions(false);
+                                        } else {
+                                            setShowMobileQuestions(true);
+                                            setShowMobileTips(false);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2 border",
+                                        showMobileQuestions
+                                            ? "bg-white/10 text-white border-white/10"
+                                            : "bg-black/20 text-gray-400 hover:text-gray-200 border-transparent"
+                                    )}
+                                >
+                                    {showMobileQuestions ? <X size={14} /> : <List size={14} className="text-cyan-400" />}
+                                    <span>Questions</span>
+                                </button>
+                            </div>
+
                             {/* Desktop Interview Label */}
                             <div className="hidden md:block text-right">
                                 <p className="text-sm font-medium text-white">Interview Session</p>
@@ -480,10 +545,10 @@ export const InterviewSession: React.FC = () => {
                     </header>
 
                     {/* Main Layout */}
-                    <main className="flex-1 flex overflow-hidden p-2 md:p-6 lg:p-8 gap-6 max-w-[1600px] mx-auto w-full relative z-10">
+                    <main className="flex-1 flex overflow-hidden p-2 md:p-6 lg:p-8 gap-6 w-full relative z-10">
 
                         {/* Lei Column: Tips & Transcript (Hidden on Mobile) */}
-                        <div className="hidden md:flex flex-col flex-[0_0_28%] min-w-[320px] shrink-0 gap-6">
+                        <div className="hidden md:flex flex-col flex-1 min-w-[320px] shrink-0 gap-6">
                             <TipsAndTranscriptContent
                                 className="flex-1 flex flex-col overflow-hidden bg-zinc-900/40 border-white/5 transition-all duration-300 hover:border-white/10 hover:bg-zinc-900/60 group"
                                 transcript={transcript}
@@ -502,16 +567,16 @@ export const InterviewSession: React.FC = () => {
                                     initial={{ opacity: 0, x: -100 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -100 }}
-                                    className="fixed inset-0 z-60 bg-zinc-950 md:hidden flex flex-col"
+                                    className="fixed inset-x-0 bottom-0 top-16 z-30 bg-app-dark md:hidden flex flex-col"
                                 >
                                     <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/90 backdrop-blur-md sticky top-0 z-10 safe-area-top">
                                         <h3 className="font-semibold text-white">Tips & Transcript</h3>
                                         <button
                                             onClick={() => setShowMobileTips(false)}
-                                            className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white z-50 touch-manipulation"
+                                            className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white hover:bg-white/20 transition-colors z-50 touch-manipulation"
                                             aria-label="Close"
                                         >
-                                            <ChevronLeft size={24} />
+                                            <X size={24} />
                                         </button>
                                     </div>
                                     <div className="flex-1 overflow-hidden p-4">
@@ -529,26 +594,10 @@ export const InterviewSession: React.FC = () => {
                         </AnimatePresence>
 
                         {/* Center Column: Question & Interaction */}
-                        <div className="flex-1 flex flex-col min-w-0">
+                        <div className="flex flex-col min-w-0 w-full lg:w-[500px] xl:w-[700px] 2xl:w-[850px] shrink-0">
 
-                            {/* Mobile Header Controls */}
-                            <div className="md:hidden flex items-center justify-between mb-4 z-40 relative px-2">
-                                <GlassButton
-                                    onClick={() => setShowMobileTips(true)}
-                                    className="px-4 py-2 text-xs flex items-center gap-2 bg-black/20 hover:bg-black/40 border-white/5 rounded-full backdrop-blur-sm shadow-none"
-                                >
-                                    <Lightbulb size={14} className="text-amber-400" />
-                                    <span className="text-gray-300">Tips & Transcript</span>
-                                </GlassButton>
+                            {/* Mobile Header Controls - REMOVED (Moved to Header) */}
 
-                                <GlassButton
-                                    onClick={() => setShowMobileQuestions(true)}
-                                    className="px-4 py-2 text-xs flex items-center gap-2 bg-black/20 hover:bg-black/40 border-white/5 rounded-full backdrop-blur-sm shadow-none"
-                                >
-                                    <List size={14} className="text-cyan-400" />
-                                    <span className="text-gray-300">Questions</span>
-                                </GlassButton>
-                            </div>
 
                             {/* Center Content */}
                             <div className="flex-1 flex gap-4 xl:gap-6 min-h-0 relative">
@@ -656,7 +705,7 @@ export const InterviewSession: React.FC = () => {
                                                 </div>
 
                                                 {/* Mic Button */}
-                                                <div className="flex flex-col items-center gap-4 z-50 relative mt-2">
+                                                <div className="flex flex-col items-center gap-4 z-10 relative mt-2">
                                                     <button
                                                         onClick={handleToggleRecording}
                                                         className={cn(
@@ -735,7 +784,7 @@ export const InterviewSession: React.FC = () => {
                         </div>
 
                         {/* Right Column: Question List (Unlocked) */}
-                        <div className="hidden lg:flex flex-col flex-[0_0_28%] min-w-[320px] shrink-0 gap-6">
+                        <div className="hidden lg:flex flex-col flex-1 min-w-[320px] shrink-0 gap-6">
                             <GlassCard className="flex-1 flex flex-col overflow-hidden bg-zinc-900/40 border-white/5 p-4">
                                 <h3 className="font-semibold text-gray-300 mb-4 px-2">Question List</h3>
                                 <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
@@ -769,20 +818,18 @@ export const InterviewSession: React.FC = () => {
                                     initial={{ opacity: 0, x: 100 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: 100 }}
-                                    className="fixed inset-0 z-50 bg-zinc-950 md:hidden flex flex-col pt-safe-top"
-                                    style={{ zIndex: 100 }}
+                                    className="fixed inset-x-0 bottom-0 top-16 z-30 bg-app-dark md:hidden flex flex-col"
+                                    style={{ zIndex: 30 }}
                                 >
                                     <div className="p-4 border-b border-white/10 flex justify-between items-center bg-zinc-900/90 backdrop-blur-md sticky top-0 z-10 shrink-0 h-16">
+                                        <h3 className="font-semibold text-white">Questions</h3>
                                         <button
                                             onClick={() => setShowMobileQuestions(false)}
-                                            className="absolute left-4 top-3 h-10 w-10 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white z-50 touch-manipulation border border-white/10"
+                                            className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 active:bg-white/20 text-white hover:bg-white/20 transition-colors z-50 touch-manipulation border border-white/10"
                                             aria-label="Close"
-                                            style={{ pointerEvents: 'auto' }}
                                         >
-                                            <ChevronRight size={24} />
+                                            <X size={24} />
                                         </button>
-                                        <h3 className="font-semibold text-white ml-auto mr-auto">Questions</h3>
-                                        <div className="w-10" /> {/* Spacer for centering */}
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                                         <div className="space-y-3 pb-20"> {/* Added pb-20 to ensure bottom is scrollable above footer */}
@@ -817,7 +864,7 @@ export const InterviewSession: React.FC = () => {
                     </main>
 
                     {/* Footer Controls (Cleaned up, no dots) */}
-                    <footer className="h-16 md:h-20 lg:h-24 border-t border-white/5 bg-zinc-950/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 relative z-20 shrink-0">
+                    <footer className="fixed bottom-0 left-0 right-0 md:static h-16 md:h-20 lg:h-24 border-t border-white/5 bg-zinc-950/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 z-20">
                         <div className="flex items-center gap-2 md:gap-4">
                             <GlassButton
                                 onClick={handlePrev}

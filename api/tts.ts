@@ -63,7 +63,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing "text" in request body' });
     }
 
-    if (text.length > 250) {
+    if (text.length > 800) {
       return res.status(400).json({ error: 'Text too long. Maximum 250 characters allowed.' });
     }
 

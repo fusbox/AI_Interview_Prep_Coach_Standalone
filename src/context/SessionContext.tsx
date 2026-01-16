@@ -214,7 +214,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
             }
 
             const newSession: InterviewSession = {
-                id: crypto.randomUUID(),
+                id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 role,
                 jobDescription,
                 questions: initialQuestions,
@@ -276,7 +276,12 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         } catch (error) {
             console.error("Failed to start session:", error);
+            // Optionally set an error state in session
             setIsLoading(false);
+            // Alert for mobile debugging
+            if (window.innerWidth < 768) {
+                console.error("Mobile Session Start Error Details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+            }
         }
     }, [isGuest]);
 

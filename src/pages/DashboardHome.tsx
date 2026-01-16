@@ -100,11 +100,11 @@ export const DashboardHome: React.FC = () => {
             {/* Recent Activity & Suggested Actions */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Recent Activity */}
-                <GlassCard className="h-full">
-                    <div className="flex justify-between items-center mb-6">
+                <GlassCard className="h-full p-3 md:p-6">
+                    <div className="flex justify-between items-center mb-4 md:mb-6">
                         <h3 className="text-lg font-bold">Recent Sessions</h3>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                         {recentSessions.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 No sessions yet. Start practicing!
@@ -121,37 +121,40 @@ export const DashboardHome: React.FC = () => {
                                     <div key={session.id} className="border border-transparent hover:border-white/5 rounded-lg overflow-hidden transition-all bg-white/0 hover:bg-white/5">
                                         <div
                                             onClick={() => toggleSession(session.id)}
-                                            className="flex items-center justify-between p-3 cursor-pointer group"
+                                            className="flex items-center justify-between p-2 md:p-3 cursor-pointer group"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-10 h-10 rounded-full bg-zinc-800/80 border ${borderColor} flex items-center justify-center text-gray-200 font-bold`}>
+                                            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0 mr-2">
+                                                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full bg-zinc-800/80 border ${borderColor} flex items-center justify-center text-gray-200 font-bold text-xs md:text-base shrink-0`}>
                                                     {session.score || '?'}
                                                 </div>
-                                                <div>
-                                                    <h4 className="font-medium group-hover:text-cyan-400 transition-colors flex items-center gap-2">
+                                                <div className="min-w-0 flex-1">
+                                                    <h4 className="font-medium text-sm md:text-base group-hover:text-cyan-400 transition-colors truncate">
                                                         {session.role}
-                                                        {expandedSessionId === session.id ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
                                                     </h4>
-                                                    <p className="text-xs text-gray-500">{session.date}</p>
+                                                    <p className="text-[10px] md:text-xs text-gray-500 truncate">{session.date}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs bg-white/10 px-2 py-1 rounded text-gray-400 mr-2">{session.questionsCount} Qs</span>
+                                            <div className="flex items-center shrink-0">
+                                                <div className="flex items-center gap-1 md:gap-2 mr-6 md:mr-12">
+                                                    <button
+                                                        onClick={(e) => handleExport(session.id, e)}
+                                                        className="p-1.5 md:p-2 text-gray-500 hover:text-cyan-400 hover:bg-white/10 rounded-full transition-colors"
+                                                        title="Export JSON"
+                                                    >
+                                                        <Download size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDelete(session.id, e)}
+                                                        className="p-1.5 md:p-2 text-gray-500 hover:text-red-400 hover:bg-white/10 rounded-full transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
 
-                                                <button
-                                                    onClick={(e) => handleExport(session.id, e)}
-                                                    className="p-2 text-gray-500 hover:text-cyan-400 hover:bg-white/10 rounded-full transition-colors"
-                                                    title="Export JSON"
-                                                >
-                                                    <Download size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleDelete(session.id, e)}
-                                                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-white/10 rounded-full transition-colors"
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                <div className="text-gray-500 group-hover:text-cyan-400 transition-colors">
+                                                    {expandedSessionId === session.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -193,7 +196,8 @@ export const DashboardHome: React.FC = () => {
                                             )}
                                         </AnimatePresence>
                                     </div>
-                                ))
+                                );
+                            })
                         )}
                     </div>
                 </GlassCard>

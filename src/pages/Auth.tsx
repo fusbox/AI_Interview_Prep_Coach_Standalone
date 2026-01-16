@@ -48,11 +48,11 @@ const Auth: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-zinc-950 font-sans selection:bg-cyan-500/30">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden font-sans selection:bg-cyan-500/30">
             {/* Background Atmosphere */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="fixed inset-0 z-0 pointer-events-none hidden md:block">
                 <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px] animate-pulse-slow" />
-                <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-900/10 rounded-full blur-[100px] delay-1000 animate-pulse-slow" />
+                <div className="absolute bottom-[-20%] left-[-10%] w-[800px] h-[800px] bg-cyan-900/10 rounded-full blur-[120px] delay-1000 animate-pulse-slow" />
                 <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay"></div>
             </div>
 
@@ -69,11 +69,11 @@ const Auth: React.FC = () => {
 
                 <GlassCard className="p-8 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
                     <div className="text-center mb-8">
-                        <img
-                            src="/ready2work.svg"
-                            alt="Ready2Work"
-                            className="h-12 w-auto mx-auto mb-6 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                        />
+                        <div className="mb-6">
+                            <h1 className="text-4xl font-bold text-white tracking-tight font-display">
+                                Ready<span className="text-cyan-400">2</span>Work
+                            </h1>
+                        </div>
                         <h1 className="text-2xl font-bold text-white mb-2">
                             {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
                         </h1>

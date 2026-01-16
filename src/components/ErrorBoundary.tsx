@@ -34,13 +34,13 @@ export class ErrorBoundary extends Component<Props, State> {
     public render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen w-full flex items-center justify-center bg-zinc-950 text-white p-4 relative overflow-hidden font-sans">
+                <div className="min-h-screen w-full flex items-center justify-center text-white p-4 relative overflow-hidden font-sans">
                     {/* Background Atmosphere */}
-                    <div className="fixed inset-0 z-0 pointer-events-none">
+                    <div className="fixed inset-0 z-0 pointer-events-none hidden md:block">
                         <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-red-900/10 rounded-full blur-[120px]" />
-                        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[100px]" />
+                        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-orange-900/10 rounded-full blur-[100px]" />
+                        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay"></div>
                     </div>
-
                     <GlassCard className="max-w-md w-full p-8 text-center relative z-10 border-red-500/20 bg-zinc-900/60">
                         <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-6">
                             <AlertTriangle className="text-red-400 w-8 h-8" />

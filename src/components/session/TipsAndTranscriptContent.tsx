@@ -34,12 +34,14 @@ export const TipsAndTranscriptContent = memo(({
 }: TipsAndTranscriptContentProps) => {
     return (
         <GlassCard className={cn("flex flex-col h-full bg-black/20 border-white/5 p-0 overflow-hidden", className)}>
-            <div className="flex items-center gap-4 mb-4 border-b border-white/10 pb-0 px-4 pt-4">
+            <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-4 px-4 pt-4">
                 <button
                     onClick={() => setSidebarTab('tips')}
                     className={cn(
-                        "pb-3 text-xs md:text-sm font-bold border-b-2 transition-colors flex-1",
-                        sidebarTab === 'tips' ? "border-cyan-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+                        "flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all text-center",
+                        sidebarTab === 'tips'
+                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]"
+                            : "bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10 hover:text-gray-300"
                     )}
                 >
                     Tips & Advice
@@ -47,11 +49,13 @@ export const TipsAndTranscriptContent = memo(({
                 <button
                     onClick={() => setSidebarTab('transcript')}
                     className={cn(
-                        "pb-3 text-xs md:text-sm font-bold border-b-2 transition-colors flex-1",
-                        sidebarTab === 'transcript' ? "border-cyan-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+                        "flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition-all text-center",
+                        sidebarTab === 'transcript'
+                            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]"
+                            : "bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10 hover:text-gray-300"
                     )}
                 >
-                    Session Transcript
+                    Transcript
                 </button>
             </div>
 

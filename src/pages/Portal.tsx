@@ -36,10 +36,10 @@ export const Portal: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen p-8 flex flex-col items-center justify-center relative overflow-hidden bg-zinc-950">
+        <div className="min-h-screen p-8 flex flex-col items-center justify-center relative overflow-hidden">
             {/* Background Blobs */}
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none hidden md:block" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[100px] pointer-events-none hidden md:block" />
 
             {/* Hero Section */}
             <motion.div

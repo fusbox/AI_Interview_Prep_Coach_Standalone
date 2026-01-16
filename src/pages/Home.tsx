@@ -27,9 +27,9 @@ const Home: React.FC = () => {
     };
 
     return (
-        <div className="h-screen w-full flex flex-col items-center justify-start md:justify-center relative overflow-y-auto overflow-x-hidden bg-zinc-950 font-sans selection:bg-cyan-500/30 pt-20 md:pt-0 pb-10 custom-scrollbar">
+        <div className="h-screen w-full flex flex-col items-center justify-start md:justify-center relative overflow-y-auto overflow-x-hidden font-sans selection:bg-cyan-500/30 pt-20 md:pt-0 pb-10 custom-scrollbar">
             {/* Background Atmosphere */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="fixed inset-0 z-0 pointer-events-none hidden md:block">
                 <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-purple-900/20 rounded-full blur-[120px] animate-pulse-slow" />
                 <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-cyan-900/20 rounded-full blur-[100px] delay-1000 animate-pulse-slow" />
                 <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay"></div>

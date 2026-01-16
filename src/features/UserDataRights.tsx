@@ -126,7 +126,7 @@ export const UserDataRights: React.FC = () => {
                     <GlassButton
                         onClick={handleDeleteAccount}
                         disabled={isLoading}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/50"
+                        variant="destructive"
                     >
                         {isLoading && status?.includes('Deleting') ? <Loader2 className="animate-spin mr-2" /> : <Trash2 size={18} className="mr-2" />}
                         Delete Account

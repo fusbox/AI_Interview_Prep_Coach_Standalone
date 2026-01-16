@@ -72,7 +72,7 @@ const SectionHeader = ({ id, icon: Icon, title, color, isExpanded, onToggle }: {
                 </div>
 
                 <span className={cn(
-                    "font-medium text-sm transition-colors",
+                    "font-medium text-sm transition-colors text-left",
                     isExpanded ? "text-white" : "text-gray-400 group-hover:text-gray-300"
                 )}>
                     {title}
@@ -111,7 +111,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
     };
 
     return (
-        <div className={cn("w-full h-full overflow-y-auto pr-2 custom-scrollbar", className)}>
+        <div className={cn("w-full h-full overflow-y-auto pr-2 custom-scrollbar text-left", className)}>
             <div className="space-y-1 pb-6">
 
                 {/* What They're Looking For */}
@@ -124,7 +124,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-gray-300 text-sm leading-relaxed italic">
+                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-gray-300 text-sm leading-relaxed italic text-left">
                                 {decodeHtml(tips.lookingFor)}
                             </div>
                         </motion.div>
@@ -141,7 +141,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3">
+                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-left">
                                 <ul className="space-y-3">
                                     {tips.pointsToCover.map((point, index) => (
                                         <li key={index} className="flex gap-3 items-start text-sm">
@@ -167,7 +167,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-gray-300 text-sm">
+                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-gray-300 text-sm text-left">
                                 {decodeHtml(tips.answerFramework)}
                             </div>
                         </motion.div>
@@ -184,7 +184,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 space-y-4">
+                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 space-y-4 text-left">
                                 <div>
                                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Key Metrics</p>
                                     <p className="text-gray-300 font-medium text-sm">{decodeHtml(tips.industrySpecifics.metrics)}</p>
@@ -208,7 +208,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3">
+                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-left">
                                 <ul className="space-y-3">
                                     {tips.mistakesToAvoid.map((mistake, index) => (
                                         <li key={index} className="flex gap-3 items-start text-sm">
@@ -232,7 +232,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg mb-3">
+                            <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg mb-3 text-left">
                                 <div className="flex gap-3">
                                     <Sparkles className="text-amber-400 shrink-0" size={18} />
                                     <p className="text-amber-100 font-medium text-sm">{decodeHtml(tips.proTip)}</p>

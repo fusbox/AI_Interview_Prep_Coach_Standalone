@@ -18,7 +18,9 @@ export const InterviewSetup: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const handleStartSession = () => {
+        console.log("handleStartSession triggered");
         if (!jobDescription.trim() || !role.trim()) {
+            console.warn("Missing fields");
             setError("Please provide both a Role and Job Description.");
             return;
         }
@@ -28,14 +30,18 @@ export const InterviewSetup: React.FC = () => {
 
         // Explicitly clear old session data to prevent stale content flash
         resetSession();
+        console.log("Session reset, calling startSession...");
 
         // Start session in background (non-blocking) to allow immediate UI transition
-        startSession(role, jobDescription).catch(err => {
-            console.error("Background session start failed:", err);
-            // In a real app, we might want to navigate back or show a global toast error
-        });
+        startSession(role, jobDescription)
+            .then(() => console.log("startSession completed successfully"))
+            .catch(err => {
+                console.error("Background session start failed:", err);
+                // In a real app, we might want to navigate back or show a global toast error
+            });
 
         // Navigate immediately to show the "Setting Up" loader in InterviewSession
+        console.log("Navigating to /interview/session");
         navigate('/interview/session', { state: { isStarting: true } });
     };
 

@@ -83,10 +83,17 @@ export const ReviewQuestionItem = memo(({
                 className
             )}
         >
+            {/* Q# Badge (Moved to Top) */}
+            <div className="p-6 md:px-8 pb-0 animate-fade-in">
+                <span className="inline-flex items-center justify-center px-3 py-1 text-sm font-bold rounded-full bg-white/5 text-white ring-1 ring-white/10 shadow-sm">
+                    Q{index + 1}
+                </span>
+            </div>
+
             {/* 0. Coach Reaction (Top of Modal) */}
             {isExpanded && q.analysis?.coachReaction && (
                 <>
-                    <div className="p-6 md:px-8 pt-8 pb-0 flex items-start gap-4 animate-fade-in text-left">
+                    <div className="px-6 md:px-8 pt-4 pb-0 flex items-start gap-4 animate-fade-in text-left">
                         <div className="shrink-0 mt-1">
                             <GlassAvatar size="lg" className="border-cyan-500/30 shadow-cyan-500/20" />
                         </div>
@@ -105,16 +112,13 @@ export const ReviewQuestionItem = memo(({
             <div
                 onClick={() => onToggle(q.id)}
                 className={cn(
-                    "p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4",
+                    "p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4",
                     !hideExpandIcon ? "cursor-pointer" : "cursor-default"
                 )}
             >
-                <div className="flex items-start gap-4 flex-1">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-1">
-                        {index + 1}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2">
                             {q.type && (
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-500/20">
                                     {q.type}
@@ -126,20 +130,22 @@ export const ReviewQuestionItem = memo(({
                                 </span>
                             )}
                         </div>
-                        <h3 className="text-lg font-semibold text-white group-hover:text-cyan-300 transition-colors">
-                            {q.text}
-                        </h3>
-                        {!isExpanded && !hideExpandIcon && (
-                            <p className="text-sm text-gray-500 mt-1">Click to reveal detailed feedback...</p>
-                        )}
+
+                        {/* Score & Caret (Moved Inline) */}
+                        <div className="flex items-center gap-3">
+                            <span className={cn("px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border", getScoreBadgeColor(score))}>
+                                {score !== undefined ? `${score}/100` : (rating || "Pending")}
+                            </span>
+                            {!hideExpandIcon && (
+                                isExpanded ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />
+                            )}
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-4 self-end md:self-auto pl-12 md:pl-0">
-                    <span className={cn("px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border", getScoreBadgeColor(score))}>
-                        {score !== undefined ? `${score}/100` : (rating || "Pending")}
-                    </span>
-                    {!hideExpandIcon && (
-                        isExpanded ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />
+                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                        {q.text}
+                    </h3>
+                    {!isExpanded && !hideExpandIcon && (
+                        <p className="text-sm text-gray-500 mt-1">Click to reveal detailed feedback...</p>
                     )}
                 </div>
             </div>
@@ -153,67 +159,19 @@ export const ReviewQuestionItem = memo(({
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden border-t border-white/10"
                     >
-                        <div className="p-6 md:p-8 space-y-8">
+                        <div className="p-4 md:p-8 space-y-6 md:space-y-8">
 
 
 
                             {/* 2. Question Text (Repeated for Context if needed, but handled by summary row usually. User asked for it below reaction) */}
-                            {/* Actually, the summary row stays sticky/visible? If not, we might need to show it. 
-                                The user said "above the question component". 
-                                BUT the question component IS the wrapper? 
-                                "Shift the Coach's Reaction component to the top of the modal... above the question component."
-                                The modal wraps ReviewQuestionItem. ReviewQuestionItem displays the question.
-                                If the user means the 'ReviewQuestionItem' itself is the question component, then the Reaction should be OUTSIDE or at the very top of it.
-                                However, ReviewQuestionItem acts as the card.
-                                I will place the Reaction at the top of the Expanded Content.
-                                Wait, "Shift the Coach's Reaction... above the question component."
-                                "Stack the answer transcript component below the question component".
-                                "Underneath these 3 stacked components..."
-                                
-                                Layout Interpretation:
-                                [ Avatar + Reaction ]
-                                [ Question Text ]
-                                [ Transcript ]
-                                [ 2-Cols: Details ]
-
-                                The "Question Text" is currently in the header (summary row). 
-                                If I move Reaction to the top of the expanded content, it appears BELOW the header.
-                                I should probably hide the header text in expanded mode? 
-                                Or simply place the Reaction *in* the expanded area *followed by* the Transcript.
-                                The Question Text is visible in the collapsed/header state.
-                                
-                                Let's assume the user considers the HEADER as the "Question Component".
-                                So layout: Header (Question) -> Expanded Area [ Reaction -> Transcript -> Columns ].
-                                
-                                Re-reading: "Shift the Coach's Reaction... above the question component."
-                                This implies Reaction comes FIRST.
-                                If so, I might need to change the order in the DOM.
-                                But the Question is clickable to toggle.
-                                
-                                Maybe the user implies the visual stacking:
-                                Reaction
-                                Question
-                                Transcript
-                                Feedback Grid
-                                
-                                I will insert the Reaction *above* the details grid.
-                                And Transcript below Question?
-                                
-                                Let's stick to:
-                                Expanded Area:
-                                1. Reaction
-                                2. Transcript
-                                3. Grid
-                                
-                                The "Question Component" (Header) is fixed at the top of the card.
-                            */}
+                            {/* ... */}
 
                             {/* 3. Transcript (Full Width) */}
                             <div className="space-y-2">
                                 <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                                     <Mic size={14} className="text-cyan-400" /> Your Answer
                                 </h4>
-                                <div className="p-6 rounded-2xl bg-black/20 text-gray-200 text-lg leading-relaxed border border-white/5 font-serif italic">
+                                <div className="p-4 md:p-6 rounded-2xl bg-black/20 text-gray-200 text-lg leading-relaxed border border-white/5 font-serif italic">
                                     "{q.transcript}"
                                 </div>
                             </div>
@@ -225,7 +183,7 @@ export const ReviewQuestionItem = memo(({
 
                                         {/* Speaking Delivery */}
                                         {q.analysis.deliveryTips && q.analysis.deliveryTips.length > 0 && (
-                                            <div className="bg-blue-500/10 rounded-xl p-6 border border-blue-500/20">
+                                            <div className="bg-blue-500/10 rounded-xl p-4 md:p-6 border border-blue-500/20">
                                                 <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2 mb-4">
                                                     <Mic size={14} /> Speaking Delivery
                                                 </h4>
@@ -353,7 +311,7 @@ export const ReviewQuestionItem = memo(({
 
                                         {/* One Big Change */}
                                         {q.analysis.biggestUpgrade && (
-                                            <div className="bg-purple-500/10 rounded-xl p-6 border border-purple-500/20">
+                                            <div className="bg-purple-500/10 rounded-xl p-4 md:p-6 border border-purple-500/20">
                                                 <h4 className="text-sm font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2 mb-3">
                                                     <Target size={14} /> One Big Upgrade
                                                 </h4>
@@ -365,7 +323,7 @@ export const ReviewQuestionItem = memo(({
 
                                         {/* Try Saying This */}
                                         {q.analysis.redoPrompt && (
-                                            <div className="bg-zinc-900 rounded-xl p-6 border border-white/10">
+                                            <div className="bg-zinc-900 rounded-xl p-4 md:p-6 border border-white/10">
                                                 <h4 className="text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2 mb-3">
                                                     <RotateCcw size={14} /> Try Saying This
                                                 </h4>
