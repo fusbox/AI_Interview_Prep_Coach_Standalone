@@ -124,7 +124,7 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-gray-300 text-sm leading-relaxed italic text-left">
+                            <div className="p-4 bg-black/20 border border-white/5 rounded-lg mb-3 text-gray-300 text-sm leading-relaxed text-left">
                                 {decodeHtml(tips.lookingFor)}
                             </div>
                         </motion.div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SessionContext } from '../context/SessionContext';
+import { useAuth } from '../context/AuthContext';
 import { Mic, MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, List, Lightbulb, Play, ArrowRight, Volume2, RotateCcw, X } from 'lucide-react';
 import { GlassCard } from '../components/ui/glass/GlassCard';
 import { GlassButton } from '../components/ui/glass/GlassButton';
@@ -751,9 +752,9 @@ export const InterviewSession: React.FC = () => {
                                                                 <GlassButton
                                                                     onClick={handleTextSubmit}
                                                                     disabled={!textAnswer.trim() || isTextSubmitting}
-                                                                    className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20"
+                                                                    className="bg-cyan-500 hover:bg-cyan-600 text-white border-0 shadow-lg shadow-cyan-500/20"
                                                                 >
-                                                                    Submit Answer <ArrowRight size={16} className="ml-2" />
+                                                                    Submit Answer <ArrowRight size={16} className="ml-2 text-white" />
                                                                 </GlassButton>
                                                             </div>
                                                         </div>
@@ -895,9 +896,10 @@ export const InterviewSession: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <GlassButton
                                 onClick={handleFinish}
-                                className="px-4 md:px-8 bg-linear-to-r from-cyan-600 to-cyan-500 hover:to-cyan-400 text-white border-0 shadow-lg shadow-cyan-900/20"
+                                variant="outline"
+                                className="px-4 md:px-8 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)]"
                             >
-                                <CheckCircle2 size={18} className="mr-2" />
+                                <CheckCircle2 size={18} className="mr-2 text-cyan-400 group-hover:text-cyan-300" />
                                 <span className="hidden md:inline">Finish & Review</span>
                                 <span className="md:hidden">Finish</span>
                             </GlassButton>

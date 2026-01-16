@@ -150,8 +150,8 @@ export const DashboardLayout: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-sm font-medium text-white">{user?.email}</p>
+                        <div className="text-right">
+                            <p className="text-sm font-medium text-white truncate max-w-[150px] md:max-w-none">{user?.email}</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-linear-to-tr from-cyan-500 to-purple-500 p-[2px]">
                             <div className="w-full h-full rounded-full bg-zinc-900 flex items-center justify-center">

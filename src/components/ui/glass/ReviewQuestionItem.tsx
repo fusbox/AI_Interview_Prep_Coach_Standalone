@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from './GlassCard';
-import { GlassAvatar } from './GlassAvatar';
+
 import GlassTips from './GlassTips';
 import {
     CheckCircle2,
@@ -93,12 +93,9 @@ export const ReviewQuestionItem = memo(({
             {/* 0. Coach Reaction (Top of Modal) */}
             {isExpanded && q.analysis?.coachReaction && (
                 <>
-                    <div className="px-6 md:px-8 pt-4 pb-0 flex items-start gap-4 animate-fade-in text-left">
-                        <div className="shrink-0 mt-1">
-                            <GlassAvatar size="lg" className="border-cyan-500/30 shadow-cyan-500/20" />
-                        </div>
-                        <div className="space-y-2 flex-1">
-                            <p className="text-3xl md:text-4xl font-medium leading-tight text-transparent bg-clip-text bg-linear-to-r from-cyan-100 to-blue-200 drop-shadow-sm">
+                    <div className="px-6 md:px-8 pt-4 pb-0 animate-fade-in text-left">
+                        <div className="space-y-2">
+                            <p className="font-display text-3xl md:text-4xl font-medium leading-tight text-transparent bg-clip-text bg-linear-to-r from-cyan-100 to-blue-200 drop-shadow-sm">
                                 "{q.analysis.coachReaction}"
                             </p>
                         </div>
