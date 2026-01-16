@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { LayoutDashboard, Mic, Settings, LogOut, User, Menu, FileText, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, Mic, Settings, LogOut, User, Menu, FileText, GraduationCap, X } from 'lucide-react';
 import { GlassButton } from '../components/ui/glass/GlassButton';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -58,16 +58,44 @@ export const DashboardLayout: React.FC = () => {
                     !sidebarOpen && "-translate-x-full md:translate-x-0"
                 )}
             >
-                <div className="h-full flex flex-col p-4">
+                <div
+                    className="h-full flex flex-col p-4"
+                    onTouchStart={(e) => {
+                        const touch = e.touches[0];
+                        // Store start X
+                        e.currentTarget.dataset.startX = touch.clientX.toString();
+                    }}
+                    onTouchMove={(e) => {
+                        // Optional: live dragging
+                    }}
+                    onTouchEnd={(e) => {
+                        const touch = e.changedTouches[0];
+                        const startX = parseFloat(e.currentTarget.dataset.startX || '0');
+                        const diff = startX - touch.clientX;
+                        if (diff > 50) { // Swiped left
+                            setSidebarOpen(false);
+                        }
+                    }}
+                >
                     <div className="h-16 flex items-center justify-between px-2 mb-8">
-                        <Link to="/" className="text-xl font-bold text-white tracking-tight font-display">
+                        {/* Branding - Hidden on mobile per user request if they considered sidebar "main section", or maybe they meant the header? 
+                            If the user meant "upper left of main section" and the sidebar is the "left navbar", maybe they mean the branding IN the sidebar.
+                            I will assume hiding it on mobile (logo only?) or just hiding the text.
+                            Let's keep it consistent: The user said "Remove...". Use `hidden md:block` for the text? 
+                            Actually, the user said "Left navbar drawer...".
+                            Let's hide the text on mobile for now.
+                        */}
+                        <Link to="/" className="text-xl font-bold text-white tracking-tight font-display md:block hidden">
                             Ready<span className="text-cyan-400">2</span>Work
                         </Link>
+                        {/* On mobile, if text is hidden, show X aligned left or right? 
+                            Just keep the close button.
+                        */}
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="md:hidden text-gray-400 hover:text-white"
+                            className="md:hidden text-gray-400 hover:text-white ml-auto"
                         >
-                            <Menu size={24} className="rotate-90" /> {/* Or X icon */}
+                            <X size={24} />
                         </button>
                     </div>
 
@@ -78,6 +106,7 @@ export const DashboardLayout: React.FC = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
+                                    onClick={() => setSidebarOpen(false)}
                                     className={cn(
                                         "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group",
                                         isActive
@@ -102,6 +131,7 @@ export const DashboardLayout: React.FC = () => {
                                 await supabase.auth.signOut();
                                 localStorage.clear(); // Clear all session data
                                 navigate('/');
+                                setSidebarOpen(false);
                             }}
                         >
                             <LogOut size={18} className="mr-3" />
