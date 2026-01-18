@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SessionContext } from '../context/SessionContext';
 import { useAuth } from '../context/AuthContext';
-import { Mic, MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, List, Lightbulb, Play, ArrowRight, Volume2, RotateCcw, X } from 'lucide-react';
+import { Mic, MessageSquare, ChevronLeft, ChevronRight, CheckCircle2, List, Lightbulb, Play, ArrowRight, Volume2, RotateCcw, X, Bug, Activity } from 'lucide-react';
 import { GlassCard } from '../components/ui/glass/GlassCard';
 import { GlassButton } from '../components/ui/glass/GlassButton';
 import { cn } from '../lib/utils';
@@ -13,6 +13,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { analyzeAnswer, generateSpeech } from '../services/geminiService';
 import { logAuditEvent } from '../services/auditLogger';
 import { SubmissionPopover } from '../components/SubmissionPopover';
+import { DebugInfoModal } from '../components/DebugInfoModal';
+import { FeedbackModal } from '../components/FeedbackModal';
 import { TipsAndTranscriptContent, TranscriptItem } from '../components/session/TipsAndTranscriptContent';
 import { SessionLoader } from '../components/ui/glass/SessionLoader';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -67,8 +69,10 @@ export const InterviewSession: React.FC = () => {
     const [sidebarTab, setSidebarTab] = useState<'tips' | 'transcript'>('tips');
 
     // Mobile UI States
+    // Mobile UI States
     const [showMobileTips, setShowMobileTips] = useState(false);
     const [showMobileQuestions, setShowMobileQuestions] = useState(false);
+    const [showDebugModal, setShowDebugModal] = useState(false);
     const [showMicPermissionError, setShowMicPermissionError] = useState(false);
 
     // MultiStepLoader State
@@ -563,6 +567,14 @@ export const InterviewSession: React.FC = () => {
                                 <p className="text-sm font-medium text-white">Interview Session</p>
                                 <p className="text-xs text-cyan-400">{session.role || "Candidate"}</p>
                             </div>
+
+                            <button
+                                onClick={() => setShowDebugModal(true)}
+                                className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-cyan-400 border border-white/5 transition-colors"
+                                title="Debug Session Data"
+                            >
+                                <Bug size={16} />
+                            </button>
                         </div>
                     </header>
 
@@ -679,12 +691,23 @@ export const InterviewSession: React.FC = () => {
 
                                         {/* Mode Toggle or Retry Button */}
                                         {isAnswered ? (
-                                            <button
-                                                onClick={handleRetry}
-                                                className="flex items-center gap-2 px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-semibold transition-all outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-cyan-500/20 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)] border border-cyan-500/10 hover:bg-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
-                                            >
-                                                <RotateCcw size={14} className="md:w-4 md:h-4" /> Retry Your Answer
-                                            </button>
+                                            <div className="flex flex-col items-center gap-3">
+                                                <button
+                                                    onClick={handleRetry}
+                                                    className="flex items-center gap-2 px-4 md:px-6 py-2 rounded-full text-xs md:text-sm font-semibold transition-all outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 bg-cyan-500/20 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.1)] border border-cyan-500/10 hover:bg-cyan-500/30 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]"
+                                                >
+                                                    <RotateCcw size={14} className="md:w-4 md:h-4" /> Retry Your Answer
+                                                </button>
+
+                                                {answers[currentQuestion.id]?.analysis && (
+                                                    <button
+                                                        onClick={() => setShowPopover(true)}
+                                                        className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-cyan-400/70 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+                                                    >
+                                                        <Activity size={14} /> See Coach's Feedback
+                                                    </button>
+                                                )}
+                                            </div>
                                         ) : (
                                             <div className="flex bg-zinc-900/50 rounded-full p-1.5 border border-white/10 shadow-inner">
                                                 <button
@@ -924,7 +947,6 @@ export const InterviewSession: React.FC = () => {
                 </>
             )}
 
-            {/* Loaders & Overlays */}
             <MultiStepLoader
                 loadingStates={
                     mode === 'voice'
@@ -961,7 +983,28 @@ export const InterviewSession: React.FC = () => {
                 } : undefined : undefined}
                 blueprint={session.blueprint}
                 hasSkippedQuestions={hasSkippedQuestions}
+                onClose={() => setShowAnswerPopover(false)}
             />
-        </div>
+
+            <DebugInfoModal
+                isOpen={showDebugModal}
+                onClose={() => setShowDebugModal(false)}
+                session={session}
+            />
+
+            <FeedbackModal
+                isOpen={showPopover}
+                onClose={() => setShowPopover(false)}
+                question={currentQuestion}
+                questionIndex={session.currentQuestionIndex}
+                answer={currentQuestion ? answers[currentQuestion.id] ? {
+                    text: answers[currentQuestion.id].text || "",
+                    audioBlob: answers[currentQuestion.id].audioBlob,
+                    analysis: answers[currentQuestion.id].analysis
+                } : { text: "", analysis: null } : { text: "", analysis: null }}
+                blueprint={session.blueprint}
+            />
+        </div >
     );
 };
+

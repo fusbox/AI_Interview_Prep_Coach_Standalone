@@ -11,6 +11,7 @@ interface SubmissionPopoverProps {
     onRetry: () => void;
     onFeedback: () => void;
     onNext: () => void;
+    onClose?: () => void;
     isSessionComplete?: boolean;
     onFinish?: () => void;
     question?: Question;
@@ -29,6 +30,7 @@ export const SubmissionPopover: React.FC<SubmissionPopoverProps> = ({
     onRetry,
     onFeedback,
     onNext,
+    onClose,
     isSessionComplete = false,
     onFinish,
     question,
@@ -89,6 +91,15 @@ export const SubmissionPopover: React.FC<SubmissionPopoverProps> = ({
     return (
         <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:pl-64 bg-black/80 backdrop-blur-md animate-fade-in">
             <GlassCard className="min-h-[384px] w-full max-w-md bg-zinc-900/90 border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col items-center justify-center gap-6 p-8 relative overflow-hidden">
+                {/* Close Button */}
+                {onClose && (
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-2 rounded-full text-zinc-500 hover:text-white hover:bg-white/10 transition-colors z-20"
+                    >
+                        <X size={20} />
+                    </button>
+                )}
                 {/* Decorative Glow */}
                 <div className="absolute -top-20 -left-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
 
