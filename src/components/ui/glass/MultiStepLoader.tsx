@@ -143,7 +143,7 @@ export const MultiStepLoader = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+                    className="fixed inset-0 z-100 flex items-center justify-center p-4 md:pl-64 bg-black/80 backdrop-blur-md"
                 >
                     {/* Matches SubmissionPopover container style */}
                     <GlassCard className="min-h-[384px] relative w-full max-w-md bg-zinc-900/90 border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col items-center justify-center p-8 overflow-hidden">
