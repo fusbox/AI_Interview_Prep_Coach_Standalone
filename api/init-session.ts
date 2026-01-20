@@ -36,7 +36,6 @@ export default async function handler(req, res) {
             - Goal: ${intakeData.primaryGoal}
             - Stage: ${intakeData.stage}
             - Must Practice: ${intakeData.mustPracticeQuestions?.join(', ') || "None"}
-            - Follow-ups: ${intakeData.allowFollowUps ? "Enabled" : "Disabled"}
             `;
         }
 

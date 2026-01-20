@@ -1,7 +1,9 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { GlassCard } from './ui/glass/GlassCard';
 import { X, Copy, Database } from 'lucide-react';
-import { InterviewSession, Question, AnalysisResult, CompetencyBlueprint, ScoringDimension } from '../types';
+import { InterviewSession } from '../types';
 
 interface DebugInfoModalProps {
     isOpen: boolean;
@@ -14,20 +16,52 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
 
     // Helper: Generate Markdown Report
     const generateMarkdownReport = () => {
-        const { blueprint, questions, currentQuestionIndex, answers } = session;
+        const { blueprint, questions, currentQuestionIndex, answers, intakeData } = session;
         const currentQ = questions[currentQuestionIndex];
         const currentAnswer = answers[currentQ.id];
         const analysis = currentAnswer?.analysis;
 
         let report = `# Competency-Driven Interview Session Debug Report\n\n`;
 
-        // Section 1: Competency Blueprint (A1)
-        report += `## 1. Competency Blueprint (A1)\n\n`;
+        // Section 1: Target Role / JD
+        report += `================================================================================\n`;
+        report += `# 1. Target Role / JD\n`;
+        report += `================================================================================\n\n`;
+        if (blueprint && blueprint.role) {
+            report += `**Role:** ${blueprint.role.title}\n`;
+            report += `**Seniority:** ${blueprint.role.seniority || 'N/A'}\n`;
+            // Truncate JD if too long for display
+            const jdPreview = session.jobDescription
+                ? (session.jobDescription.substring(0, 150) + (session.jobDescription.length > 150 ? '...' : ''))
+                : 'N/A';
+            report += `**Job Description:**\n> ${jdPreview}\n\n`;
+        } else {
+            report += `_(Role data missing)_\n\n`;
+        }
+
+        // Section 2: Intake Items / Values
+        report += `================================================================================\n`;
+        report += `# 2. Intake Items / Values\n`;
+        report += `================================================================================\n\n`;
+        if (intakeData) {
+            report += `- **Stage:** ${intakeData.stage}\n`;
+            report += `- **Biggest Struggle:** ${intakeData.biggestStruggle}\n`;
+            report += `- **Challenge Level:** ${intakeData.challengeLevel}\n`;
+            report += `- **Primary Goal:** ${intakeData.primaryGoal}\n`;
+            report += `- **Confidence Score:** ${intakeData.confidenceScore}/5\n\n`;
+        } else {
+            report += `_(Intake data missing)_\n\n`;
+        }
+
+        // Section 3: Competency Blueprint (A1)
+        report += `================================================================================\n`;
+        report += `# 3. Competency Blueprint (A1)\n`;
+        report += `================================================================================\n\n`;
         if (blueprint) {
             report += `**Role:** ${blueprint.role.title} (${blueprint.role.seniority || 'N/A'})\n`;
             report += `**Reading Level:** ${blueprint.readingLevel?.mode} (Max words: ${blueprint.readingLevel?.maxSentenceWords || 'N/A'})\n\n`;
 
-            report += `### Competencies\n`;
+            report += `### COMPETENCIES\n`;
             blueprint.competencies?.forEach(c => {
                 report += `#### ${c.name} (${c.id}) [Weight: ${c.weight}]\n`;
                 report += `- **Definition:** ${c.definition}\n`;
@@ -36,37 +70,51 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
                 report += `- **Bands:**\n  - Developing: "${c.bands?.Developing}"\n  - Good: "${c.bands?.Good}"\n  - Strong: "${c.bands?.Strong}"\n\n`;
             });
 
-            report += `### Scoring Model\n`;
-            report += `**Dimensions:**\n`;
+            report += `### SCORING MODEL\n`;
+            report += `#### Dimensions:\n`;
             blueprint.scoringModel?.dimensions?.forEach(d => {
                 report += `- ${d.name} (${d.id}) [Weight: ${d.weight}]\n`;
             });
-            report += `\n**Rating Bands:**\n- Developing: ${JSON.stringify(blueprint.scoringModel.ratingBands.Developing)}\n- Good: ${JSON.stringify(blueprint.scoringModel.ratingBands.Good)}\n- Strong: ${JSON.stringify(blueprint.scoringModel.ratingBands.Strong)}\n\n`;
+            report += `\n#### Rating Bands:\n- Developing: ${JSON.stringify(blueprint.scoringModel.ratingBands.Developing)}\n- Good: ${JSON.stringify(blueprint.scoringModel.ratingBands.Good)}\n- Strong: ${JSON.stringify(blueprint.scoringModel.ratingBands.Strong)}\n\n`;
         } else {
             report += `_(Blueprint missing)_\n\n`;
         }
         report += `---\n\n`; // Separator
 
         // Section 2: Question Plan (B1)
-        report += `## 2. Question Plan (B1)\n\n`;
+        // Section 4: Question Plan (B1)
+        report += `================================================================================\n`;
+        report += `# 4. Question Plan (B1)\n`;
+        report += `================================================================================\n\n`;
         questions?.forEach((q) => {
-            report += `- **[${q.id}]** ${q.competencyId || 'N/A'} | ${q.type || 'N/A'} | ${q.difficulty || 'N/A'}\n`;
-            report += `  - **Intent:** ${q.intent || 'N/A'}\n`;
-            if (q.tips) {
-                report += `  - **Rubric Hints (from Tips):**\n    - ${q.tips.pointsToCover.join('\n    - ')}\n`;
+            const typeLabel = q.type ? `<span class="text-cyan-400">${q.type}</span>` : 'N/A';
+            const diffLabel = q.difficulty ? `<span class="text-purple-400">${q.difficulty}</span>` : 'N/A';
+            report += `**[${q.id}]:** ${q.competencyId || 'N/A'} | ${typeLabel} | ${diffLabel}\n\n`;
+            report += `**Intent:** ${q.intent || 'N/A'}\n\n`;
+            if (q.tips && q.tips.pointsToCover && q.tips.pointsToCover.length > 0) {
+                report += `#### Rubric Hints (from Tips):\n`;
+                q.tips.pointsToCover.forEach(hint => {
+                    report += `- ${hint}\n`;
+                });
+                report += `\n`;
             }
-            report += `\n`;
         });
         report += `---\n\n`;
 
         // Section 3: Question Text (C1)
-        report += `## 3. Active Question (C1)\n\n`;
+        // Section 5: Question Text (C1)
+        report += `================================================================================\n`;
+        report += `# 5. Active Question (C1)\n`;
+        report += `================================================================================\n\n`;
         report += `**${currentQ.id}:** "${currentQ.text}"\n`;
         report += `(Type: ${currentQ.type}, Difficulty: ${currentQ.difficulty}, C-ID: ${currentQ.competencyId})\n\n`;
         report += `---\n\n`;
 
         // Section 4: Micro-Acknowledgement (F1)
-        report += `## 4. Micro-Acknowledgement (F1)\n\n`;
+        // Section 6: Micro-Acknowledgement (F1)
+        report += `================================================================================\n`;
+        report += `# 6. Micro-Acknowledgement (F1)\n`;
+        report += `================================================================================\n\n`;
         if (analysis?.coachReaction) {
             report += `> "${analysis.coachReaction}"\n`;
         } else {
@@ -75,7 +123,10 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         report += `\n---\n\n`;
 
         // Section 5: Answer Text
-        report += `## 5. Answer Text\n\n`;
+        // Section 7: Answer Text
+        report += `================================================================================\n`;
+        report += `# 7. Answer Text\n`;
+        report += `================================================================================\n\n`;
         if (currentAnswer?.text) {
             report += `"${currentAnswer.text}"\n`;
         } else if (currentAnswer?.audioBlob) {
@@ -86,7 +137,10 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         report += `\n---\n\n`;
 
         // Section 6: Speaking Delivery (G1)
-        report += `## 6. Speaking Delivery (G1)\n\n`;
+        // Section 8: Speaking Delivery (G1)
+        report += `================================================================================\n`;
+        report += `# 8. Speaking Delivery (G1)\n`;
+        report += `================================================================================\n\n`;
         if (analysis?.deliveryStatus) {
             report += `- **Status:** ${analysis.deliveryStatus}\n`;
             if (analysis.deliveryTips && analysis.deliveryTips.length > 0) {
@@ -98,7 +152,10 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         report += `\n---\n\n`;
 
         // Section 7: Answer Evaluation (D1 & D2)
-        report += `## 7. Answer Evaluation (D1 & D2)\n\n`;
+        // Section 9: Answer Evaluation (D1 & D2)
+        report += `================================================================================\n`;
+        report += `# 9. Answer Evaluation (D1 & D2)\n`;
+        report += `================================================================================\n\n`;
         if (analysis?.answerScore) {
             report += `**Rating:** ${analysis.rating} (${analysis.answerScore}/100)\n\n`;
 
@@ -133,7 +190,10 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         report += `\n---\n\n`;
 
         // Section 8: Feedback (E1)
-        report += `## 8. Feedback (E1)\n\n`;
+        // Section 10: Feedback (E1)
+        report += `================================================================================\n`;
+        report += `# 10. Feedback (E1)\n`;
+        report += `================================================================================\n\n`;
         if (analysis) {
             report += `### Key Feedback\n`;
             analysis.feedback?.forEach(f => report += `- ${f}\n`);
@@ -146,7 +206,10 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         report += `\n---\n\n`;
 
         // Section 9: Session Aggregation (H2)
-        report += `## 9. Session Aggregation (H2)\n\n`;
+        // Section 11: Session Aggregation (H2)
+        report += `================================================================================\n`;
+        report += `# 11. Session Aggregation (H2)\n`;
+        report += `================================================================================\n\n`;
         const allAnswered = Object.values(session.answers).filter(a => a.analysis?.answerScore);
         if (allAnswered.length > 0) {
             const avgScore = Math.round(allAnswered.reduce((sum, a) => sum + (a.analysis?.answerScore || 0), 0) / allAnswered.length);
@@ -159,9 +222,27 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         return report;
     };
 
-    const copyToClipboard = () => {
-        const text = generateMarkdownReport();
-        navigator.clipboard.writeText(text);
+    // Ref for the rendered content
+    const contentRef = React.useRef<HTMLDivElement>(null);
+
+    const copyToClipboard = async () => {
+        if (contentRef.current) {
+            const html = contentRef.current.innerHTML;
+            const plainText = contentRef.current.innerText;
+
+            try {
+                // Use Clipboard API with HTML format for rich text pasting
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([html], { type: 'text/html' }),
+                        'text/plain': new Blob([plainText], { type: 'text/plain' }),
+                    }),
+                ]);
+            } catch {
+                // Fallback to plain text if HTML copy fails
+                await navigator.clipboard.writeText(plainText);
+            }
+        }
     };
 
     const reportContent = generateMarkdownReport();
@@ -192,11 +273,73 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-auto p-6 custom-scrollbar bg-black/40 font-mono text-xs md:text-sm text-zinc-300 leading-relaxed">
-                    <pre className="whitespace-pre-wrap font-mono text-zinc-300">
+                {/* Content - Rendered Markdown */}
+                <div ref={contentRef} className="flex-1 overflow-auto p-6 custom-scrollbar bg-black/40">
+                    <ReactMarkdown
+                        rehypePlugins={[rehypeRaw]}
+                        components={{
+                            h1: ({ children }) => (
+                                <h1 className="text-2xl font-bold text-zinc-400 mb-4 pb-2">
+                                    {children}
+                                </h1>
+                            ),
+                            h2: ({ children }) => (
+                                <h2 className="text-xl font-bold text-blue-400 mt-6 mb-3">
+                                    {children}
+                                </h2>
+                            ),
+                            h3: ({ children }) => (
+                                <h3 className="text-lg font-semibold text-amber-500 mt-4 mb-2">
+                                    {children}
+                                </h3>
+                            ),
+                            h4: ({ children }) => (
+                                <h4 className="text-blue-400 mt-3 mb-1">
+                                    {children}
+                                </h4>
+                            ),
+                            p: ({ children }) => (
+                                <p className="text-zinc-200 text-sm leading-relaxed mb-2">
+                                    {children}
+                                </p>
+                            ),
+                            strong: ({ children }) => (
+                                <strong className="text-amber-300 font-semibold">
+                                    {children}
+                                </strong>
+                            ),
+                            em: ({ children }) => (
+                                <em className="text-zinc-400 italic">
+                                    {children}
+                                </em>
+                            ),
+                            ul: ({ children }) => (
+                                <ul className="list-disc list-inside space-y-1 text-sm text-zinc-200 ml-2 mb-2">
+                                    {children}
+                                </ul>
+                            ),
+                            li: ({ children }) => (
+                                <li className="text-zinc-200">
+                                    {children}
+                                </li>
+                            ),
+                            blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-cyan-500/50 pl-4 py-1 my-2 bg-cyan-500/5 rounded-r-2xl text-cyan-300 italic">
+                                    {children}
+                                </blockquote>
+                            ),
+                            hr: () => (
+                                <hr className="my-4 border-white/10" />
+                            ),
+                            code: ({ children }) => (
+                                <code className="bg-white/10 text-pink-400 px-1.5 py-0.5 rounded text-xs font-mono">
+                                    {children}
+                                </code>
+                            ),
+                        }}
+                    >
                         {reportContent}
-                    </pre>
+                    </ReactMarkdown>
                 </div>
             </GlassCard>
         </div>

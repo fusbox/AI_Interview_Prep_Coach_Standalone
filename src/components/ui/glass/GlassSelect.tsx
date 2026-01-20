@@ -3,11 +3,18 @@ import { cn } from '../../../lib/utils';
 import { ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface GlassSelectOption {
+    value: string;
+    label: string;
+    disabled?: boolean;
+    group?: string;  // Optional group name
+}
+
 interface GlassSelectProps {
     className?: string;
     label?: string;
     error?: string;
-    options: { value: string; label: string; disabled?: boolean }[];
+    options: GlassSelectOption[];
     placeholder?: string;
     value: string;
     onChange: (value: string) => void;
@@ -20,6 +27,18 @@ export const GlassSelect = React.forwardRef<HTMLDivElement, GlassSelectProps>(
         const containerRef = useRef<HTMLDivElement>(null);
 
         const selectedOption = options.find(opt => opt.value === value);
+
+        // Group options by group name
+        const groupedOptions = options.reduce((acc, opt) => {
+            if (opt.value === "") return acc; // Skip placeholder
+            const group = opt.group || "_ungrouped";
+            if (!acc[group]) acc[group] = [];
+            acc[group].push(opt);
+            return acc;
+        }, {} as Record<string, GlassSelectOption[]>);
+
+        const groupOrder = Object.keys(groupedOptions).filter(g => g !== "_ungrouped");
+        if (groupedOptions["_ungrouped"]) groupOrder.push("_ungrouped");
 
         // Click outside to close
         useEffect(() => {
@@ -76,29 +95,40 @@ export const GlassSelect = React.forwardRef<HTMLDivElement, GlassSelectProps>(
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: -5, scale: 0.95 }}
                                 transition={{ duration: 0.15, ease: "easeOut" }}
-                                className="absolute z-50 w-full mt-1 overflow-hidden bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                                className="absolute z-50 w-full mt-1 bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto"
                             >
                                 <ul className="py-1">
-                                    {options.filter(opt => opt.value !== "").map((opt) => { // Filter out empty placeholder options if they exist in valid options
-                                        const isSelected = opt.value === value;
-                                        return (
-                                            <li key={opt.value}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSelect(opt.value)}
-                                                    disabled={opt.disabled}
-                                                    className={cn(
-                                                        "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group",
-                                                        isSelected ? "bg-cyan-500/10 text-cyan-400" : "text-gray-300 hover:bg-white/5 hover:text-white",
-                                                        opt.disabled && "opacity-50 cursor-not-allowed"
-                                                    )}
-                                                >
-                                                    <span className="truncate">{opt.label}</span>
-                                                    {isSelected && <Check size={14} className="text-cyan-400" />}
-                                                </button>
-                                            </li>
-                                        );
-                                    })}
+                                    {groupOrder.map((groupName) => (
+                                        <React.Fragment key={groupName}>
+                                            {/* Group Header */}
+                                            {groupName !== "_ungrouped" && (
+                                                <li className="px-4 py-2 text-xs font-bold text-cyan-400 uppercase tracking-wider bg-zinc-800/50 sticky top-0">
+                                                    {groupName}
+                                                </li>
+                                            )}
+                                            {/* Group Options */}
+                                            {groupedOptions[groupName].map((opt) => {
+                                                const isSelected = opt.value === value;
+                                                return (
+                                                    <li key={opt.value}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSelect(opt.value)}
+                                                            disabled={opt.disabled}
+                                                            className={cn(
+                                                                "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between group",
+                                                                isSelected ? "bg-cyan-500/10 text-cyan-400" : "text-gray-300 hover:bg-white/5 hover:text-white",
+                                                                opt.disabled && "opacity-50 cursor-not-allowed"
+                                                            )}
+                                                        >
+                                                            <span className="truncate">{opt.label}</span>
+                                                            {isSelected && <Check size={14} className="text-cyan-400" />}
+                                                        </button>
+                                                    </li>
+                                                );
+                                            })}
+                                        </React.Fragment>
+                                    ))}
                                 </ul>
                             </motion.div>
                         )}

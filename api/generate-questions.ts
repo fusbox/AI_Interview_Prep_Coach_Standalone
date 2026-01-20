@@ -15,13 +15,13 @@ export default async function handler(req, res) {
             return res.status(405).json({ error: 'Method Not Allowed' });
         }
 
-        const { role, jobDescription, questionPlan, blueprint, subsetIndices } = req.body || {};
+        const { role, jobDescription, questionPlan, blueprint, subsetIndices, intakeData } = req.body || {};
 
         if (!role) {
             return res.status(400).json({ error: 'Missing "role" in request body' });
         }
 
-        console.log(`[GenerateQuestions] Role: ${role}, HasPlan: ${!!questionPlan}, Indices: ${JSON.stringify(subsetIndices)}`);
+        console.log(`[GenerateQuestions] Role: ${role}, HasPlan: ${!!questionPlan}, Indices: ${JSON.stringify(subsetIndices)}, Confidence: ${intakeData?.confidenceScore}`);
 
         // Optimization: Filter plan if specific indices requested
         if (questionPlan && Array.isArray(subsetIndices)) {
@@ -52,6 +52,58 @@ export default async function handler(req, res) {
     - When in doubt: Prioritize simplicity.
         `;
 
+        // New: Confidence / Tone Context
+        let confidenceContext = "";
+        if (intakeData?.confidenceScore) {
+            confidenceContext = `
+    TONE ADJUSTMENT (Confidence: ${intakeData.confidenceScore}/5):
+    - ${intakeData.confidenceScore <= 2 ? "Candidate is anxious. Use encouraging, supportive phrasing. Avoid harsh or intimidating complexity." : ""}
+    - ${intakeData.confidenceScore === 3 ? "Candidate is neutral. Use standard professional, neutral phrasing." : ""}
+    - ${intakeData.confidenceScore >= 4 ? "Candidate is confident. Use direct, challenging, and no-nonsense phrasing." : ""}
+            `;
+        }
+
+        // Challenge Level Adjustment
+        let challengeContext = "";
+        if (intakeData?.challengeLevel) {
+            const level = intakeData.challengeLevel;
+            challengeContext = `
+    DIFFICULTY ADJUSTMENT (Level: ${level}):
+    - ${level === 'warm_up' ? "Keep questions friendly, standard, and confidence-building. Avoid edge cases." : ""}
+    - ${level === 'realistic' ? "Standard interview difficulty. Mix of standard and behavioral questions." : ""}
+    - ${level === 'pressure_test' ? "HARD MODE. Ask complex, multi-layered questions. Test edge cases and stress-test their knowledge." : ""}
+            `;
+        }
+
+        // Primary Goal Adjustment
+        let goalContext = "";
+        if (intakeData?.primaryGoal) {
+            const goal = intakeData.primaryGoal;
+            goalContext = `
+    GOAL-DRIVEN QUESTION FOCUS (Goal: ${goal}):
+    - ${goal === 'build_confidence' ? "Start with easier, confidence-building questions. Avoid intimidating edge cases." : ""}
+    - ${goal === 'get_more_structured' ? "Include questions that require structured answers (e.g., STAR-format behavioral questions)." : ""}
+    - ${goal === 'practice_star_stories' ? "Favor BEHAVIORAL questions that require storytelling (Situation, Task, Action, Result)." : ""}
+    - ${goal === 'get_more_concise' ? "Standard question complexity. User wants to practice brevity." : ""}
+    - ${goal === 'improve_metrics' ? "Focus on results-oriented questions. Ask about quantifiable impact and metrics." : ""}
+    - ${goal === 'role_specific_depth' ? "Include TECHNICAL questions requiring deep domain expertise for the role." : ""}
+    - ${goal === 'practice_hard_questions' ? "Include difficult, edge-case, or curveball questions. Challenge the candidate." : ""}
+            `;
+        }
+
+        // Interview Stage Adjustment
+        let stageContext = "";
+        if (intakeData?.stage) {
+            const stage = intakeData.stage;
+            stageContext = `
+    INTERVIEW STAGE CONTEXT (Stage: ${stage}):
+    - ${stage === 'recruiter_screen' ? "Focus on soft skills, basic qualifications, culture fit, and communication style. Keep questions accessible." : ""}
+    - ${stage === 'hiring_manager' ? "Focus on role-specific depth, problem-solving ability, and how they'd fit with the team. More technical depth expected." : ""}
+    - ${stage === 'panel' ? "Prepare for cross-functional questions. Multiple perspectives. Expect questions about collaboration and handling diverse stakeholders." : ""}
+    - ${stage === 'final_round' ? "Executive presence expected. Focus on strategic thinking, leadership, culture add, and long-term vision." : ""}
+            `;
+        }
+
         let promptInfo = "";
         let schema;
 
@@ -61,6 +113,8 @@ export default async function handler(req, res) {
 CONVERT THIS PLAN INTO INTERVIEW QUESTIONS.
 PLAN:
 ${JSON.stringify(questionPlan)}
+
+${confidenceContext}
 
 CONSTRAINTS:
 - Create exactly ${questionPlan.questions.length} questions.
@@ -108,7 +162,7 @@ CONSTRAINTS:
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
-                contents: `${readingLevelContext}\n\n${promptInfo}`,
+                contents: `${readingLevelContext}\n${confidenceContext}\n${challengeContext}\n${goalContext}\n${stageContext}\n${promptInfo}`,
                 config: {
                     responseMimeType: "application/json",
                     responseSchema: schema,

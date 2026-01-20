@@ -228,7 +228,8 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
                 currentQuestionIndex: 0,
                 answers: {},
                 status: 'ACTIVE',
-                blueprint: blueprint || undefined
+                blueprint: blueprint || undefined,
+                intakeData: intakeData // Persist intake data for context
             };
 
             setSession(newSession);
@@ -244,7 +245,8 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
                     jobDescription,
                     questionPlan || undefined,
                     blueprint || undefined,
-                    remainingIndices
+                    remainingIndices,
+                    intakeData // Pass intake data for tone context
                 ).then(remainingQuestions => {
                     setSession(prev => {
                         const updatedQuestions = [...prev.questions];
@@ -317,7 +319,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         try {
             const competency = session.blueprint?.competencies.find(c => c.id === question.competencyId);
-            const tips = await generateQuestionTips(question.text, session.role || 'General', competency);
+            const tips = await generateQuestionTips(question.text, session.role || 'General', competency, session.intakeData, session.blueprint);
             setSession(prev => ({
                 ...prev,
                 questions: prev.questions.map(q =>

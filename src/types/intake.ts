@@ -28,10 +28,6 @@ export type InterviewStage =
     | "final_round"
     | ""; // Added empty state
 
-export type StrongExamplePreference =
-    | "always"
-    | "only_when_developing"
-    | "never";
 
 export interface OnboardingIntakeV1 {
     intakeVersion: "v1";
@@ -40,8 +36,6 @@ export interface OnboardingIntakeV1 {
     challengeLevel: ChallengeLevel;
     primaryGoal: PrimaryGoal;
     stage: InterviewStage;
-    allowFollowUps: boolean;
-    includeStrongExamples: StrongExamplePreference;
     mustPracticeQuestions: string[];
 }
 
@@ -100,15 +94,6 @@ export const INTERVIEW_STAGE_OPTIONS: {
         { value: "final_round", label: "Final round" }
     ];
 
-export const STRONG_EXAMPLE_OPTIONS: {
-    value: StrongExamplePreference;
-    label: string;
-}[] = [
-        { value: "always", label: "Always" },
-        { value: "only_when_developing", label: "Only if my score isn't strong" },
-        { value: "never", label: "Never" }
-    ];
-
 export const DEFAULT_ONBOARDING_INTAKE_V1: OnboardingIntakeV1 = {
     intakeVersion: "v1",
     confidenceScore: 3,
@@ -116,8 +101,6 @@ export const DEFAULT_ONBOARDING_INTAKE_V1: OnboardingIntakeV1 = {
     challengeLevel: "realistic",
     primaryGoal: "get_more_structured",
     stage: "", // Default to empty
-    allowFollowUps: true,
-    includeStrongExamples: "only_when_developing",
     mustPracticeQuestions: []
 };
 
@@ -134,8 +117,6 @@ export function validateOnboardingIntakeV1(input: any): OnboardingIntakeV1 {
     if (!Array.isArray(safe.mustPracticeQuestions)) {
         safe.mustPracticeQuestions = [];
     }
-
-    safe.allowFollowUps = Boolean(safe.allowFollowUps);
 
     return safe;
 }

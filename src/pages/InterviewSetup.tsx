@@ -1,25 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { GlassCard } from '../components/ui/glass/GlassCard';
 import { GlassButton } from '../components/ui/glass/GlassButton';
 import { GlassTextarea } from '../components/ui/glass/GlassTextarea';
-import { Upload, FileText, Mic, AlertCircle, Briefcase } from 'lucide-react';
+import { GlassSelect } from '../components/ui/glass/GlassSelect';
+import { Upload, FileText, AlertCircle, Briefcase, ArrowRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSessionContext } from '../hooks/useSessionContext';
 import { ResumeUploadZone } from '../components/ResumeUploadZone';
 import { IntakeForm } from '../components/IntakeForm';
 import { OnboardingIntakeV1, DEFAULT_ONBOARDING_INTAKE_V1 } from '../types/intake';
 import { SERVICE_ROLES, TECH_ROLES } from '../types';
+import { generateCoachPrep, CoachPrepData } from '../services/geminiService';
 
 export const InterviewSetup: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { startSession, resetSession, isLoading } = useSessionContext();
+    const { resetSession, isLoading } = useSessionContext();
     const [jobDescription, setJobDescription] = useState('');
     // Initialize role from navigation state if available
     const [role, setRole] = useState(location.state?.role || '');
     const [isStarting, setIsStarting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showIntake, setShowIntake] = useState(false);
+
+    // Pre-fetched coach prep data
+    const coachPrepRef = useRef<CoachPrepData | null>(null);
 
     const validateAndContinue = () => {
         if (!jobDescription.trim() || !role.trim()) {
@@ -29,6 +34,15 @@ export const InterviewSetup: React.FC = () => {
         }
         setError(null);
         setShowIntake(true);
+
+        // Pre-fetch coach prep in background while user fills intake wizard
+        console.log("[Setup] Pre-fetching coach prep...");
+        generateCoachPrep(role, jobDescription)
+            .then(data => {
+                coachPrepRef.current = data;
+                console.log("[Setup] Coach prep pre-fetched:", data?.greeting);
+            })
+            .catch(err => console.warn("[Setup] Coach prep pre-fetch failed:", err));
     };
 
     const handleStartSession = (intakeData: OnboardingIntakeV1 = DEFAULT_ONBOARDING_INTAKE_V1) => {
@@ -43,21 +57,18 @@ export const InterviewSetup: React.FC = () => {
         setIsStarting(true);
         setError(null);
 
-        // Explicitly clear old session data to prevent stale content flash
+        // Clear old session data
         resetSession();
-        console.log("Session reset, calling startSession...");
 
-        // Start session in background (non-blocking) to allow immediate UI transition
-        startSession(role, jobDescription, intakeData)
-            .then(() => console.log("startSession completed successfully"))
-            .catch(err => {
-                console.error("Background session start failed:", err);
-                // In a real app, we might want to navigate back or show a global toast error
-            });
-
-        // Navigate immediately to show the "Setting Up" loader in InterviewSession
-        console.log("Navigating to /interview/session");
-        navigate('/interview/session', { state: { isStarting: true } });
+        // Navigate to prep screen - pass pre-fetched data if available
+        navigate('/interview/prep', {
+            state: {
+                role,
+                jobDescription,
+                intakeData,
+                cachedCoachPrep: coachPrepRef.current
+            }
+        });
     };
 
     if (showIntake) {
@@ -71,7 +82,6 @@ export const InterviewSetup: React.FC = () => {
                 </button>
                 <IntakeForm
                     onSubmit={handleStartSession}
-                    onSkip={() => handleStartSession(DEFAULT_ONBOARDING_INTAKE_V1)}
                 />
             </div>
         );
@@ -140,40 +150,21 @@ export const InterviewSetup: React.FC = () => {
                         <div className="space-y-6 flex-1">
                             <p className="text-sm text-gray-400">Selecting a role below will automatically fill the detailed fields for you.</p>
 
-                            <div className="relative">
-                                {/* Styled Select to match Intake Form aesthetic */}
-                                <select
-                                    value={role}
-                                    onChange={(e) => {
-                                        const newRole = e.target.value;
-                                        setRole(newRole);
-                                        if (newRole) {
-                                            setJobDescription(`Standardized job description for ${newRole}`);
-                                        }
-                                    }}
-                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white appearance-none focus:outline-none focus:border-cyan-500/50 cursor-pointer text-base md:text-lg shadow-inner hover:bg-white/5 transition-colors"
-                                    style={{
-                                        backgroundImage: 'none' // Remove default arrow on some browsers
-                                    }}
-                                >
-                                    <option value="" disabled className="bg-zinc-900 text-gray-500">Select a role...</option>
-                                    <optgroup label="Service & Operations" className="bg-zinc-900 text-cyan-400 font-bold">
-                                        {SERVICE_ROLES.map(r => (
-                                            <option key={r} value={r} className="text-white font-normal bg-zinc-800">{r}</option>
-                                        ))}
-                                    </optgroup>
-                                    <optgroup label="Corporate & Technical" className="bg-zinc-900 text-purple-400 font-bold">
-                                        {TECH_ROLES.map(r => (
-                                            <option key={r} value={r} className="text-white font-normal bg-zinc-800">{r}</option>
-                                        ))}
-                                    </optgroup>
-                                </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="m6 9 6 6 6-6" />
-                                    </svg>
-                                </div>
-                            </div>
+                            {/* GlassSelect for consistent dropdown styling */}
+                            <GlassSelect
+                                value={role}
+                                onChange={(newRole) => {
+                                    setRole(newRole);
+                                    if (newRole) {
+                                        setJobDescription(`Standardized job description for ${newRole}`);
+                                    }
+                                }}
+                                placeholder="Select a role..."
+                                options={[
+                                    ...SERVICE_ROLES.map(r => ({ value: r, label: r, group: "Service & Operations" })),
+                                    ...TECH_ROLES.map(r => ({ value: r, label: r, group: "Corporate & Technical" }))
+                                ]}
+                            />
                         </div>
                     </GlassCard>
                 </div>
@@ -204,8 +195,8 @@ export const InterviewSetup: React.FC = () => {
                     onClick={validateAndContinue}
                     disabled={isStarting}
                 >
-                    <Mic className="mr-2 w-5 h-5" />
-                    {isStarting ? 'Generating Session...' : 'Customize Session'}
+                    {isStarting ? 'Generating Session...' : 'Next'}
+                    <ArrowRight className="ml-2 w-5 h-5" />
                 </GlassButton>
 
                 <p className="text-xs text-center text-gray-500 mt-4">
@@ -225,7 +216,8 @@ export const InterviewSetup: React.FC = () => {
                         onClick={validateAndContinue}
                         disabled={isStarting}
                     >
-                        {isStarting ? '...' : 'Customize Session'}
+                        {isStarting ? '...' : 'Next'}
+                        <ArrowRight className="ml-2 w-4 h-4" />
                     </GlassButton>
                 </div>
             </div>

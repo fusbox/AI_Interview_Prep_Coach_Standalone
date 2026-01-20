@@ -138,6 +138,8 @@ export interface InterviewSession {
   status?: 'IDLE' | 'ACTIVE' | 'COMPLETED';
   // New: Store the blueprint for this session
   blueprint?: CompetencyBlueprint;
+  // New: Store intake data for context persistence
+  intakeData?: import('./intake').OnboardingIntakeV1;
 }
 
 export const TECH_ROLES = [

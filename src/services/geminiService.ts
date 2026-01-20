@@ -83,13 +83,13 @@ export const generateQuestionPlan = async (blueprint: CompetencyBlueprint): Prom
   }
 };
 
-export const generateQuestions = async (role: string, jobDescription?: string, questionPlan?: QuestionPlan, blueprint?: CompetencyBlueprint, subsetIndices?: number[]): Promise<Question[]> => {
+export const generateQuestions = async (role: string, jobDescription?: string, questionPlan?: QuestionPlan, blueprint?: CompetencyBlueprint, subsetIndices?: number[], intakeData?: OnboardingIntakeV1): Promise<Question[]> => {
   try {
     const authHeaders = await getAuthHeader();
     const response = await fetch('/api/generate-questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ role, jobDescription, questionPlan, blueprint, subsetIndices })
+      body: JSON.stringify({ role, jobDescription, questionPlan, blueprint, subsetIndices, intakeData })
     });
 
     if (!response.ok) {
@@ -111,13 +111,13 @@ export const generateQuestions = async (role: string, jobDescription?: string, q
   }
 };
 
-export const generateQuestionTips = async (question: string, role: string, competency?: any): Promise<QuestionTips> => {
+export const generateQuestionTips = async (question: string, role: string, competency?: any, intakeData?: OnboardingIntakeV1, blueprint?: any): Promise<QuestionTips> => {
   try {
     const authHeaders = await getAuthHeader();
     const response = await fetch('/api/generate-tips', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ question, role, competency })
+      body: JSON.stringify({ question, role, competency, intakeData, blueprint })
     });
 
     if (!response.ok) {
@@ -139,9 +139,9 @@ export const generateQuestionTips = async (question: string, role: string, compe
   }
 };
 
-export const analyzeAnswer = async (question: string, input: Blob | string, blueprint?: CompetencyBlueprint, questionId?: string): Promise<AnalysisResult> => {
+export const analyzeAnswer = async (question: string, input: Blob | string, blueprint?: CompetencyBlueprint, questionId?: string, intakeData?: OnboardingIntakeV1): Promise<AnalysisResult> => {
   try {
-    let payload: any = { question, blueprint, questionId };
+    let payload: any = { question, blueprint, questionId, intakeData };
 
     if (typeof input === 'string') {
       payload.input = input;
@@ -254,5 +254,33 @@ export const generateSpeech = async (text: string): Promise<string | null> => {
   } catch (error) {
     console.error("TTS Fetch Error:", error);
     throw error;
+  }
+};
+
+// Coach Prep - Fast advice generation for interstitial
+export interface CoachPrepData {
+  greeting: string;
+  advice: string;
+  keySkills: string[];
+  encouragement: string;
+}
+
+export const generateCoachPrep = async (role: string, jobDescription?: string): Promise<CoachPrepData | null> => {
+  try {
+    const authHeaders = await getAuthHeader();
+    const response = await fetch('/api/coach-prep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ role, jobDescription })
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Coach Prep Failed: ${response.status}`, errText);
+      throw new Error(`Coach prep failed: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error generating coach prep:", error);
+    return null;
   }
 };

@@ -65,6 +65,10 @@ export const InterviewSession: React.FC = () => {
     const [showPopover, setShowPopover] = useState(false); // Used for internal Feedback Modal
     const [showAnswerPopover, setShowAnswerPopover] = useState(false); // Used for main Submission Popover visibility
 
+    // Recording Confirmation State
+    const [showRecordingPopover, setShowRecordingPopover] = useState(false);
+    const [pendingRecording, setPendingRecording] = useState<Blob | null>(null);
+
     // Sidebar State
     const [sidebarTab, setSidebarTab] = useState<'tips' | 'transcript'>('tips');
 
@@ -267,72 +271,91 @@ export const InterviewSession: React.FC = () => {
         }
     }, [playingUrl]);
 
+    // Stop recording - just save blob and show popover for user confirmation
     const handleStopRecording = async () => {
         stopListening();
         const recordedAudioBlob = await stopRecording();
-        if (recordedAudioBlob && currentQuestion) {
-            const audioUrl = URL.createObjectURL(recordedAudioBlob);
-            const currentTranscript = liveTranscript || "(Audio Response)";
+        if (recordedAudioBlob) {
+            setPendingRecording(recordedAudioBlob);
+            setShowRecordingPopover(true);
+        }
+    };
 
-            setTranscript(prev => {
-                // Calculate attempt number
-                let attemptCount = 1;
-                for (let i = prev.length - 1; i >= 0; i--) {
-                    if (prev[i].type === 'question') break;
-                    if (prev[i].type === 'answer') attemptCount++;
+    // User confirms submission
+    const handleSubmitRecording = async () => {
+        if (!pendingRecording || !currentQuestion) return;
+
+        setShowRecordingPopover(false);
+        const audioUrl = URL.createObjectURL(pendingRecording);
+        const currentTranscript = liveTranscript || "(Audio Response)";
+
+        setTranscript(prev => {
+            let attemptCount = 1;
+            for (let i = prev.length - 1; i >= 0; i--) {
+                if (prev[i].type === 'question') break;
+                if (prev[i].type === 'answer') attemptCount++;
+            }
+
+            return [
+                ...prev,
+                {
+                    sender: 'user',
+                    text: currentTranscript,
+                    type: 'answer',
+                    label: `Answer (Question ${session.currentQuestionIndex + 1}) - Attempt ${attemptCount}`,
+                    audioUrl
                 }
+            ];
+        });
 
-                return [
-                    ...prev,
-                    {
-                        sender: 'user',
-                        text: currentTranscript,
-                        type: 'answer',
-                        label: `Answer (Question ${session.currentQuestionIndex + 1}) - Attempt ${attemptCount}`,
-                        audioUrl
-                    }
-                ];
+        setShowLoader(true);
+        setLoaderComplete(false);
+        setAnalysisReady(false);
+
+        try {
+            const analysis = await analyzeAnswer(
+                currentQuestion.text,
+                pendingRecording,
+                session.blueprint,
+                currentQuestion.id,
+                session.intakeData
+            );
+
+            saveAnswer(currentQuestion.id, {
+                audioBlob: pendingRecording,
+                text: analysis.transcript || currentTranscript,
+                analysis
             });
 
-            setShowLoader(true);
-            setLoaderComplete(false);
-            setAnalysisReady(false);
-
-            try {
-                const analysis = await analyzeAnswer(
-                    currentQuestion.text,
-                    recordedAudioBlob,
-                    session.blueprint,
-                    currentQuestion.id
-                );
-
-                saveAnswer(currentQuestion.id, {
-                    audioBlob: recordedAudioBlob,
-                    text: analysis.transcript || currentTranscript,
-                    analysis
-                });
-
-                logAuditEvent('ANSWER_RECORDED', { questionId: currentQuestion.id, size: recordedAudioBlob.size });
-                setAnalysisReady(true);
-                setShowAnswerPopover(true);
-            } catch (err) {
-                console.error("Analysis failed", err);
-                saveAnswer(currentQuestion.id, {
-                    audioBlob: recordedAudioBlob,
-                    text: currentTranscript,
-                    analysis: null
-                });
-                setAnalysisReady(true);
-            } finally {
-                setIsAnalyzing(false);
-            }
+            logAuditEvent('ANSWER_RECORDED', { questionId: currentQuestion.id, size: pendingRecording.size });
+            setAnalysisReady(true);
+            setShowAnswerPopover(true);
+        } catch (err) {
+            console.error("Analysis failed", err);
+            saveAnswer(currentQuestion.id, {
+                audioBlob: pendingRecording,
+                text: currentTranscript,
+                analysis: null
+            });
+            setAnalysisReady(true);
+        } finally {
+            setIsAnalyzing(false);
+            setPendingRecording(null);
         }
+    };
+
+    // User discards recording and wants to retry
+    const handleRetryRecording = () => {
+        setShowRecordingPopover(false);
+        setPendingRecording(null);
+        resetTranscript();
     };
 
     const handleToggleRecording = () => {
         if (isRecording) {
             handleStopRecording();
         } else {
+            resetTranscript();
             startRecording();
             startListening();
         }
@@ -371,7 +394,8 @@ export const InterviewSession: React.FC = () => {
                 currentQuestion.text,
                 validText,
                 session.blueprint,
-                currentQuestion.id
+                currentQuestion.id,
+                session.intakeData
             );
 
             saveAnswer(currentQuestion.id, {
@@ -579,10 +603,10 @@ export const InterviewSession: React.FC = () => {
                     </header>
 
                     {/* Main Layout */}
-                    <main className="flex-1 flex overflow-hidden p-2 md:p-6 lg:p-8 gap-6 w-full relative z-10">
+                    <main className="flex-1 grid grid-cols-1 md:grid-cols-[30%_40%_30%] overflow-hidden p-2 md:p-6 lg:p-8 gap-6 w-full relative z-10">
 
                         {/* Lei Column: Tips & Transcript (Hidden on Mobile) */}
-                        <div className="hidden md:flex flex-col flex-1 min-w-[320px] shrink-0 gap-6">
+                        <div className="hidden md:flex flex-col min-w-0 gap-6 overflow-y-auto custom-scrollbar">
                             <TipsAndTranscriptContent
                                 className="flex-1 flex flex-col overflow-hidden bg-zinc-900/40 border-white/5 transition-all duration-300 hover:border-white/10 hover:bg-zinc-900/60 group"
                                 transcript={transcript}
@@ -628,7 +652,7 @@ export const InterviewSession: React.FC = () => {
                         </AnimatePresence>
 
                         {/* Center Column: Question & Interaction */}
-                        <div className="flex flex-col min-w-0 w-full lg:w-[500px] xl:w-[700px] 2xl:w-[850px] shrink-0">
+                        <div className="flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
 
                             {/* Mobile Header Controls - REMOVED (Moved to Header) */}
 
@@ -745,12 +769,26 @@ export const InterviewSession: React.FC = () => {
                                                             <div className="w-full h-full relative flex items-center justify-center">
                                                                 <AudioVisualizer stream={mediaStream} isRecording={isRecording} />
                                                             </div>
-                                                            <div className="absolute top-full left-0 right-0 mt-4 text-center">
-                                                                <p className="text-gray-300 text-sm md:text-lg font-medium animate-pulse px-4">
-                                                                    "{liveTranscript || "Listening..."}"
-                                                                </p>
-                                                            </div>
                                                         </>
+                                                    ) : showRecordingPopover ? (
+                                                        // Submit/Retry Popover
+                                                        <div className="flex flex-col items-center justify-center gap-4 animate-fadeIn">
+                                                            <span className="text-white text-lg font-medium">Recording Complete</span>
+                                                            <div className="flex gap-3">
+                                                                <button
+                                                                    onClick={handleSubmitRecording}
+                                                                    className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-medium rounded-lg transition-colors"
+                                                                >
+                                                                    Submit Answer
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleRetryRecording}
+                                                                    className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg border border-white/20 transition-colors"
+                                                                >
+                                                                    Retry
+                                                                </button>
+                                                            </div>
+                                                        </div>
                                                     ) : (
                                                         <div className="flex items-center justify-center">
                                                             <span className="text-white/20 text-lg font-medium tracking-wide">Ready to Record</span>
@@ -758,32 +796,34 @@ export const InterviewSession: React.FC = () => {
                                                     )}
                                                 </div>
 
-                                                {/* Mic Button */}
-                                                <div className="flex flex-col items-center gap-4 z-10 relative mt-2">
-                                                    <button
-                                                        onClick={handleToggleRecording}
-                                                        className={cn(
-                                                            "group relative w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_0_40px_rgba(6,182,212,0.2)]",
-                                                            isRecording
-                                                                ? "bg-red-500/10 text-red-500 border-2 border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.4)] scale-110"
-                                                                : "bg-black/40 text-cyan-400 border-2 border-cyan-500/30 hover:border-cyan-400 hover:shadow-[0_0_60px_rgba(6,182,212,0.4)] hover:scale-105"
+                                                {/* Mic Button - hide when popover is showing */}
+                                                {!showRecordingPopover && (
+                                                    <div className="flex flex-col items-center gap-4 z-10 relative mt-2">
+                                                        <button
+                                                            onClick={handleToggleRecording}
+                                                            className={cn(
+                                                                "group relative w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_0_40px_rgba(6,182,212,0.2)]",
+                                                                isRecording
+                                                                    ? "bg-red-500/10 text-red-500 border-2 border-red-500/50 shadow-[0_0_60px_rgba(239,68,68,0.4)] scale-110"
+                                                                    : "bg-black/40 text-cyan-400 border-2 border-cyan-500/30 hover:border-cyan-400 hover:shadow-[0_0_60px_rgba(6,182,212,0.4)] hover:scale-105"
+                                                            )}
+                                                        >
+                                                            <div className={cn(
+                                                                "absolute inset-0 rounded-full opacity-20 transition-all duration-300",
+                                                                isRecording ? "bg-red-500 animate-pulse" : "bg-cyan-500 group-hover:opacity-30"
+                                                            )} />
+                                                            <Mic size={32} className={cn("relative z-10 md:w-10 md:h-10", isRecording && "animate-bounce")} />
+                                                        </button>
+                                                        {micPermissionError && (
+                                                            <p className="text-red-400 text-xs mt-2 bg-red-900/20 px-2 py-1 rounded-md border border-red-500/20">
+                                                                Microphone access denied. Please check your browser settings.
+                                                            </p>
                                                         )}
-                                                    >
-                                                        <div className={cn(
-                                                            "absolute inset-0 rounded-full opacity-20 transition-all duration-300",
-                                                            isRecording ? "bg-red-500 animate-pulse" : "bg-cyan-500 group-hover:opacity-30"
-                                                        )} />
-                                                        <Mic size={32} className={cn("relative z-10 md:w-10 md:h-10", isRecording && "animate-bounce")} />
-                                                    </button>
-                                                    {micPermissionError && (
-                                                        <p className="text-red-400 text-xs mt-2 bg-red-900/20 px-2 py-1 rounded-md border border-red-500/20">
-                                                            Microphone access denied. Please check your browser settings.
+                                                        <p className={cn("text-xs font-medium tracking-wider transition-colors uppercase", isRecording ? "text-red-400" : "text-gray-500")}>
+                                                            {isRecording ? "Recording..." : "Click to Speak"}
                                                         </p>
-                                                    )}
-                                                    <p className={cn("text-xs font-medium tracking-wider transition-colors uppercase", isRecording ? "text-red-400" : "text-gray-500")}>
-                                                        {isRecording ? "Recording..." : "Click to Speak"}
-                                                    </p>
-                                                </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -824,7 +864,7 @@ export const InterviewSession: React.FC = () => {
                         </div>
 
                         {/* Right Column: Question List (Unlocked) */}
-                        <div className="hidden lg:flex flex-col flex-1 min-w-[320px] shrink-0 gap-6">
+                        <div className="hidden lg:flex flex-col min-w-0 gap-6 overflow-y-auto custom-scrollbar">
                             <GlassCard className="flex-1 flex flex-col overflow-hidden bg-zinc-900/40 border-white/5 p-4">
                                 <h3 className="font-semibold text-gray-300 mb-4 px-2">Question List</h3>
                                 <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">

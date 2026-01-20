@@ -16,7 +16,7 @@ export default async function handler(req, res) {
             return res.status(405).json({ error: 'Method Not Allowed' });
         }
 
-        const { question, input, blueprint, questionId } = req.body || {};
+        const { question, input, blueprint, questionId, intakeData } = req.body || {};
 
         if (!question || !input) {
             return res.status(400).json({ error: 'Missing "question" or "input" in request body' });
@@ -57,21 +57,96 @@ Ratings Bands: ${JSON.stringify(blueprint.scoringModel.ratingBands)}
 
             const readingLevelContext = blueprint?.readingLevel
                 ? `
-    READING LEVEL INSTRUCTIONS:
-    - Mode: ${blueprint.readingLevel.mode}
-    - Max Sentence Words: ${blueprint.readingLevel.maxSentenceWords}
-    - Avoid Jargon: ${blueprint.readingLevel.avoidJargon}
-    - Adapt all feedback (notes, tips, reaction) to this level.
+    READING LEVEL (Mode: ${blueprint.readingLevel.mode}):
+    - STRICT CONSTRAINT: Simplify ALL output.
+    - Max ${blueprint.readingLevel.maxSentenceWords} words/sentence.
+    - NO corporate jargon (e.g., "leverage", "utilize", "synergy", "stakeholders", "alignment").
+    - Use everyday language.
+    - Feedback must be understood by a ${blueprint.readingLevel.mode === 'Simple' ? '12-year-old' : 'high school student'}.
+    
+    CRITICAL: Apply these reading constraints to ALL generated text, especially:
+    1. "strongResponse" & "redoPrompt"
+    2. "feedback" & "biggestUpgrade" (Use clear, direct advice)
+    3. "coachReaction"
+    4. "dimensionScores" notes
+    5. "missingElements" (Be plain and direct)
         `
                 : (blueprint ? `
     IMPORTANT: Adapt the reading level of your feedback to the target candidate profile for a ${blueprint.role.title}.
-    - If the role is entry-level (e.g., Cashier): STRICTLY use a 6th-7th grade reading level. Keep sentences short and simple.
-    - If the role is highly technical/executive: Use appropriate professional terminology but keep phrasing clear.
+    - If the role is entry-level: STRICTLY use a 6th-7th grade reading level. Max 15 words/sentence. No big words.
+    - If the role is senior: Use professional but clear language.
     - When in doubt: Prioritize simplicity.
         ` : "");
 
+
+            // Confidence / Struggle Context
+            let struggleContext = "";
+            const { intakeData } = req.body; // Extract if available
+
+            if (intakeData?.biggestStruggle) {
+                const s = intakeData.biggestStruggle;
+                struggleContext = `
+    CUSTOM FOCUS (User Struggle: "${s}"):
+    - The user specifically wants help with: ${s}.
+    - ${s === 'getting_started' ? "Focus feedback on: How quickly they got to the point. Did they hesitate?" : ""}
+    - ${s === 'staying_organized' ? "Focus feedback on: Structure. Did they ramble? Penalize deviations strictly." : ""}
+    - ${s === 'explaining_impact' ? "Focus feedback on: Concrete results. Did they mention numbers/outcomes?" : ""}
+    - ${s === 'technical_depth' ? "Focus feedback on: Technical terminology accuracy and depth." : ""}
+    - ${s === 'behavioral_storytelling' ? "Focus feedback on: STAR Method adherence. Was the 'Action' clear?" : ""}
+    - ${s === 'weaknesses_gaps' ? "Focus feedback on: Honesty + Pivot to growth. Did they sound defensive?" : ""}
+    - ${s === 'nerves_anxiety' ? "Focus feedback on: Tone and confidence markers. Be extra supportive." : ""}
+    
+    ACTION: Ensure the "biggestUpgrade" and "coachReaction" specifically address this struggle if relevant.
+                `;
+            }
+
+            // Challenge Level Context
+            let challengeContext = "";
+            if (intakeData?.challengeLevel) {
+                const level = intakeData.challengeLevel;
+                challengeContext = `
+    GRADING STRINGENCY (Level: ${level}):
+    - ${level === 'warm_up' ? "Be encouraging. Overlook minor flaws. Focus on confidence." : ""}
+    - ${level === 'realistic' ? "Fair professional standard. Flag obvious gaps." : ""}
+    - ${level === 'pressure_test' ? "RUTHLESS CRITIQUE. High bar for 'Strong'. Nitpick missing nuances. Assume they are applying for a Senior/Staff role." : ""}
+                `;
+            }
+
+            // Primary Goal Context
+            let goalContext = "";
+            if (intakeData?.primaryGoal) {
+                const goal = intakeData.primaryGoal;
+                goalContext = `
+    GOAL-DRIVEN FEEDBACK FOCUS (Goal: ${goal}):
+    - ${goal === 'build_confidence' ? "Be extra encouraging. Highlight strengths. Gentle on critique." : ""}
+    - ${goal === 'get_more_structured' ? "Focus feedback on: Logical flow and organization. Did they use a framework (STAR, etc.)?" : ""}
+    - ${goal === 'practice_star_stories' ? "Focus feedback on: STAR adherence. Was the Situation clear? Action specific? Result measurable?" : ""}
+    - ${goal === 'get_more_concise' ? "Focus feedback on: Brevity. STRICTLY penalize rambling. Reward concise answers." : ""}
+    - ${goal === 'improve_metrics' ? "Focus feedback on: Quantifiable results. Did they mention numbers, percentages, or measurable outcomes?" : ""}
+    - ${goal === 'role_specific_depth' ? "Focus feedback on: Technical accuracy and domain expertise for the role." : ""}
+    - ${goal === 'practice_hard_questions' ? "High bar. Expect nuanced, sophisticated answers. Flag any superficiality." : ""}
+                `;
+            }
+
+            // Interview Stage Context
+            let stageContext = "";
+            if (intakeData?.stage) {
+                const stage = intakeData.stage;
+                stageContext = `
+    INTERVIEW STAGE LENS (Stage: ${stage}):
+    - ${stage === 'recruiter_screen' ? "Evaluate for: basic fit, communication clarity, and culture alignment. Be encouraging." : ""}
+    - ${stage === 'hiring_manager' ? "Evaluate for: role-specific competence, problem-solving, and team fit. Higher bar for technical depth." : ""}
+    - ${stage === 'panel' ? "Evaluate for: handling multiple perspectives, cross-functional awareness, and collaboration skills." : ""}
+    - ${stage === 'final_round' ? "Evaluate for: executive presence, strategic thinking, leadership potential, and culture add. Highest bar." : ""}
+                `;
+            }
+
             const commonPromptInstructions = `
-${readingLevelContext}
+
+${struggleContext}
+${challengeContext}
+${goalContext}
+${stageContext}
 1. Analyze the user's answer.
 2. ${contextContext ? "Map answer to the relevant competency defined in the Blueprint." : ""}
 3. Identify 3-5 key professional terms used.
@@ -104,6 +179,7 @@ ${readingLevelContext}
       - **Score 60-79**: Briefly validate what was done well, THEN include **EXACTLY ONE** actionable sentence explaining what would make this dimension stronger.
       - **Score < 60**: Provide detailed constructive feedback (removes length restriction) explaining the gap and exactly what is needed for a strong answer.
 ${scoringModelContext}
+${readingLevelContext}
         `;
 
             const schema = {

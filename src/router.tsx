@@ -10,6 +10,7 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { DashboardHome } from './pages/DashboardHome';
 import { InterviewSetup } from './pages/InterviewSetup';
 import { InterviewSession } from './pages/InterviewSession';
+import { InterviewPrep } from './pages/InterviewPrep';
 import { InterviewReview } from './pages/InterviewReview';
 import { ResumeUploader } from './pages/ResumeUploader';
 import { Training } from './pages/Training';
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
                     { path: '/training', element: <Training /> },
                     { path: '/glass/interview/session', element: <InterviewSession /> },
                     { path: '/interview/session', element: <InterviewSession /> },
+                    { path: '/interview/prep', element: <InterviewPrep /> },
                     { path: '/review', element: <InterviewReview /> },
                     { path: '/settings', element: <div className="p-8"><UserDataRights /></div> }
                 ]

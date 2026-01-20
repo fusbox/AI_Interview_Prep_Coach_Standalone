@@ -174,163 +174,182 @@ export const ReviewQuestionItem = memo(({
                             </div>
 
                             {q.analysis ? (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
-                                    {/* Left Column: Delivery & Dimensions */}
-                                    <div className="space-y-8">
+                                <>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+                                        {/* Left Column: Delivery & Dimensions */}
+                                        <div className="space-y-8">
 
-                                        {/* Speaking Delivery */}
-                                        {q.analysis.deliveryTips && q.analysis.deliveryTips.length > 0 && (
-                                            <div className="bg-blue-500/10 rounded-xl p-4 md:p-6 border border-blue-500/20">
-                                                <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-                                                    <Mic size={14} /> Speaking Delivery
-                                                </h4>
-                                                {q.analysis.deliveryStatus && (
-                                                    <div className="mb-4">
-                                                        <span className="text-xs font-bold text-blue-300 bg-blue-500/20 px-2 py-1 rounded">
-                                                            {q.analysis.deliveryStatus}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <ul className="space-y-3">
-                                                    {q.analysis.deliveryTips.map((tip, idx) => (
-                                                        <li key={idx} className="text-sm text-gray-300 flex gap-2">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                                                            {tip}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {/* Dimensions */}
-                                        {q.analysis.dimensionScores && q.analysis.dimensionScores.length > 0 && (
-                                            <div className="space-y-5">
-                                                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                                                    <Activity size={14} className="text-purple-400" /> Dimensions
-                                                </h4>
-                                                <div className="space-y-4">
-                                                    {q.analysis.dimensionScores
-                                                        .filter(ds => ds.dimensionId !== 'dimensionId')
-                                                        .map((ds, idx) => {
-                                                            let dimName = ds.dimensionId;
-                                                            let dimWeight: number | undefined;
-                                                            let relativeWeight: number | undefined;
-
-                                                            if (blueprint?.scoringModel?.dimensions) {
-                                                                const dimensions = blueprint.scoringModel.dimensions;
-                                                                const totalWeight = dimensions.reduce((sum, d) => sum + (d.weight || 0), 0);
-
-                                                                const found = dimensions.find(d => d.id === ds.dimensionId);
-                                                                if (found) {
-                                                                    dimName = found.name;
-                                                                    dimWeight = found.weight;
-                                                                    if (totalWeight > 0 && dimWeight !== undefined) {
-                                                                        relativeWeight = (dimWeight / totalWeight) * 100;
-                                                                    }
-                                                                }
-                                                            }
-
-                                                            if (dimName === ds.dimensionId && dimName.includes('_')) {
-                                                                dimName = dimName.split('_')
-                                                                    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                                                                    .join(' ');
-                                                            }
-
-                                                            return (
-                                                                <div key={idx} className="space-y-2">
-                                                                    <div className="flex justify-between items-end">
-                                                                        <div className="flex items-baseline gap-2">
-                                                                            <span className="text-sm text-gray-200 font-medium">{dimName}</span>
-                                                                            {relativeWeight !== undefined && (
-                                                                                <span className="text-xs text-gray-500">({Math.round(relativeWeight)}%)</span>
-                                                                            )}
-                                                                        </div>
-                                                                        <span className={cn("font-mono font-bold text-sm", getScoreColor(ds.score))}>{ds.score}/100</span>
-                                                                    </div>
-                                                                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden relative">
-                                                                        <div
-                                                                            className="h-full rounded-full overflow-hidden absolute left-0 top-0 transition-all duration-500"
-                                                                            style={{ width: `${ds.score}%` }}
-                                                                        >
-                                                                            <div
-                                                                                className="h-full"
-                                                                                style={{
-                                                                                    width: `${ds.score > 0 ? (100 / ds.score) * 100 : 100}%`,
-                                                                                    backgroundImage: 'linear-gradient(to right, #0e7490 0%, #059669 70%, #34d399 100%)'
-                                                                                }}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <p className="text-xs text-gray-400 leading-snug">{ds.note}</p>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Right Column: Signals, Missing, Big Change, Redo */}
-                                    <div className="space-y-6">
-
-                                        {/* Feedback Signals Grid */}
-                                        <div className="grid grid-cols-1 gap-6">
-                                            {/* Signals Detected */}
-                                            {q.analysis.evidenceExtracts && q.analysis.evidenceExtracts.length > 0 && (
-                                                <div className="space-y-3">
-                                                    <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Signals Detected</h4>
-                                                    <ul className="space-y-2">
-                                                        {q.analysis.evidenceExtracts.slice(0, 3).map((ex, i) => (
-                                                            <li key={i} className="text-sm text-gray-300 flex gap-2">
-                                                                <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                                                                "{ex}"
+                                            {/* Speaking Delivery */}
+                                            {q.analysis.deliveryTips && q.analysis.deliveryTips.length > 0 && (
+                                                <div className="bg-blue-500/10 rounded-xl p-4 md:p-6 border border-blue-500/20">
+                                                    <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+                                                        <Mic size={14} /> Speaking Delivery
+                                                    </h4>
+                                                    {q.analysis.deliveryStatus && (
+                                                        <div className="mb-4">
+                                                            <span className="text-xs font-bold text-blue-300 bg-blue-500/20 px-2 py-1 rounded">
+                                                                {q.analysis.deliveryStatus}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <ul className="space-y-3">
+                                                        {q.analysis.deliveryTips.map((tip, idx) => (
+                                                            <li key={idx} className="text-sm text-gray-300 flex gap-2">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                                                                {tip}
                                                             </li>
                                                         ))}
                                                     </ul>
                                                 </div>
                                             )}
 
-                                            {/* Missing Signals */}
-                                            {q.analysis.missingElements && q.analysis.missingElements.length > 0 && (
-                                                <div className="space-y-3">
-                                                    <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider">Missing Signals</h4>
-                                                    <ul className="space-y-2">
-                                                        {q.analysis.missingElements.slice(0, 3).map((miss, i) => (
-                                                            <li key={i} className="text-sm text-gray-300 flex gap-2">
-                                                                <span className="w-4 h-4 rounded-full border border-red-500/50 flex items-center justify-center shrink-0 mt-0.5 text-[10px] text-red-500 font-bold">!</span>
-                                                                {miss}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
+                                            {/* Dimensions */}
+                                            {q.analysis.dimensionScores && q.analysis.dimensionScores.length > 0 && (
+                                                <div className="space-y-5">
+                                                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                                        <Activity size={14} className="text-purple-400" /> Dimensions
+                                                    </h4>
+                                                    <div className="space-y-4">
+                                                        {q.analysis.dimensionScores
+                                                            .filter(ds => ds.dimensionId !== 'dimensionId')
+                                                            .map((ds, idx) => {
+                                                                let dimName = ds.dimensionId;
+                                                                let dimWeight: number | undefined;
+                                                                let relativeWeight: number | undefined;
+
+                                                                if (blueprint?.scoringModel?.dimensions) {
+                                                                    const dimensions = blueprint.scoringModel.dimensions;
+                                                                    const totalWeight = dimensions.reduce((sum, d) => sum + (d.weight || 0), 0);
+
+                                                                    const found = dimensions.find(d => d.id === ds.dimensionId);
+                                                                    if (found) {
+                                                                        dimName = found.name;
+                                                                        dimWeight = found.weight;
+                                                                        if (totalWeight > 0 && dimWeight !== undefined) {
+                                                                            relativeWeight = (dimWeight / totalWeight) * 100;
+                                                                        }
+                                                                    }
+                                                                }
+
+                                                                if (dimName === ds.dimensionId && dimName.includes('_')) {
+                                                                    dimName = dimName.split('_')
+                                                                        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                                                                        .join(' ');
+                                                                }
+
+                                                                return (
+                                                                    <div key={idx} className="space-y-2">
+                                                                        <div className="flex justify-between items-end">
+                                                                            <div className="flex items-baseline gap-2">
+                                                                                <span className="text-sm text-gray-200 font-medium">{dimName}</span>
+                                                                                {relativeWeight !== undefined && (
+                                                                                    <span className="text-xs text-gray-500">({Math.round(relativeWeight)}%)</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <span className={cn("font-mono font-bold text-sm", getScoreColor(ds.score))}>{ds.score}/100</span>
+                                                                        </div>
+                                                                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                                                                            <div
+                                                                                className="h-full rounded-full overflow-hidden absolute left-0 top-0 transition-all duration-500"
+                                                                                style={{ width: `${ds.score}%` }}
+                                                                            >
+                                                                                <div
+                                                                                    className="h-full"
+                                                                                    style={{
+                                                                                        width: `${ds.score > 0 ? (100 / ds.score) * 100 : 100}%`,
+                                                                                        backgroundImage: 'linear-gradient(to right, #0e7490 0%, #059669 70%, #34d399 100%)'
+                                                                                    }}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                        <p className="text-xs text-gray-400 leading-snug">{ds.note}</p>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* One Big Change */}
-                                        {q.analysis.biggestUpgrade && (
-                                            <div className="bg-purple-500/10 rounded-xl p-4 md:p-6 border border-purple-500/20">
-                                                <h4 className="text-sm font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2 mb-3">
-                                                    <Target size={14} /> One Big Upgrade
-                                                </h4>
-                                                <p className="text-gray-200 text-sm leading-relaxed">
-                                                    {q.analysis.biggestUpgrade}
-                                                </p>
-                                            </div>
-                                        )}
+                                        {/* Right Column: Signals, Missing, Big Change, Redo */}
+                                        <div className="space-y-6">
 
-                                        {/* Try Saying This */}
-                                        {q.analysis.redoPrompt && (
-                                            <div className="bg-zinc-900 rounded-xl p-4 md:p-6 border border-white/10">
-                                                <h4 className="text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2 mb-3">
-                                                    <RotateCcw size={14} /> Try Saying This
-                                                </h4>
-                                                <p className="text-gray-300 text-sm leading-relaxed italic border-l-2 border-cyan-500/50 pl-4 py-1">
-                                                    "{q.analysis.redoPrompt}"
-                                                </p>
+                                            {/* Feedback Signals Grid */}
+                                            <div className="grid grid-cols-1 gap-6">
+                                                {/* Signals Detected */}
+                                                {q.analysis.evidenceExtracts && q.analysis.evidenceExtracts.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Signals Detected</h4>
+                                                        <ul className="space-y-2">
+                                                            {q.analysis.evidenceExtracts.slice(0, 3).map((ex, i) => (
+                                                                <li key={i} className="text-sm text-gray-300 flex gap-2">
+                                                                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                                                                    "{ex}"
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+
+                                                {/* Missing Signals */}
+                                                {q.analysis.missingElements && q.analysis.missingElements.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider">Missing Signals</h4>
+                                                        <ul className="space-y-2">
+                                                            {q.analysis.missingElements.slice(0, 3).map((miss, i) => (
+                                                                <li key={i} className="text-sm text-gray-300 flex gap-2">
+                                                                    <span className="w-4 h-4 rounded-full border border-red-500/50 flex items-center justify-center shrink-0 mt-0.5 text-[10px] text-red-500 font-bold">!</span>
+                                                                    {miss}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+
+                                            {/* One Big Change */}
+                                            {q.analysis.biggestUpgrade && (
+                                                <div className="bg-purple-500/10 rounded-xl p-4 md:p-6 border border-purple-500/20">
+                                                    <h4 className="text-sm font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+                                                        <Target size={14} /> One Big Upgrade
+                                                    </h4>
+                                                    <p className="text-gray-200 text-sm leading-relaxed">
+                                                        {q.analysis.biggestUpgrade}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Try Saying This */}
+                                            {q.analysis.redoPrompt && (
+                                                <div className="bg-zinc-900 rounded-xl p-4 md:p-6 border border-white/10">
+                                                    <h4 className="text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+                                                        <RotateCcw size={14} /> Try Saying This
+                                                    </h4>
+                                                    <p className="text-gray-300 text-sm leading-relaxed italic border-l-2 border-cyan-500/50 pl-4 py-1">
+                                                        "{q.analysis.redoPrompt}"
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
+
+                                    {/* Strong Answer Section (Full Width) */}
+                                    {q.analysis.strongResponse && (
+                                        <>
+                                            {/* Horizontal Separator */}
+                                            <div className="h-px w-full bg-linear-to-r from-transparent via-amber-500/30 to-transparent mt-8 mb-6" />
+
+                                            <div className="space-y-3">
+                                                <h4 className="text-sm font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                                                    <Star size={14} className="text-amber-300" /> Strong Answer Example
+                                                </h4>
+                                                <div className="p-4 md:p-6 rounded-2xl bg-amber-500/5 text-gray-200 text-base leading-relaxed border border-amber-500/20 font-serif italic">
+                                                    "{q.analysis.strongResponse}"
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-32 border border-white/10 rounded-xl bg-white/5">
                                     {isLoading ? (

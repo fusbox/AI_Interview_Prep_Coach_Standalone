@@ -10,6 +10,9 @@ export const useAudioRecording = () => {
     const chunksRef = useRef<Blob[]>([]);
 
     const startRecording = useCallback(async () => {
+        // Set recording state immediately for instant UI feedback
+        setIsRecording(true);
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             setMediaStream(stream);
@@ -35,10 +38,10 @@ export const useAudioRecording = () => {
             };
 
             mediaRecorder.start();
-            setIsRecording(true);
         } catch (err) {
             console.error("Error accessing microphone:", err);
             setPermissionError(true);
+            setIsRecording(false); // Revert on error
         }
     }, []);
 
