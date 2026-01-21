@@ -128,10 +128,10 @@ export const InterviewSetup: React.FC = () => {
                                 value={jobDescription}
                                 onChange={(e) => setJobDescription(e.target.value)}
                                 error={error || undefined}
-                                maxLength={3000}
+                                maxLength={5000}
                             />
                             <div className="text-right text-xs text-gray-500 mt-2">
-                                {jobDescription.length}/3000
+                                {jobDescription.length}/5000
                             </div>
                         </div>
                     </GlassCard>

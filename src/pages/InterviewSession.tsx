@@ -308,10 +308,23 @@ export const InterviewSession: React.FC = () => {
             ];
         });
 
-        setShowLoader(true);
+        // 1. Set initial pending state
         setLoaderComplete(false);
         setAnalysisReady(false);
+        setShowLoader(false);
 
+        // 2. Save answer immediately (pending analysis)
+        saveAnswer(currentQuestion.id, {
+            audioBlob: pendingRecording,
+            text: currentTranscript,
+            analysis: null
+        });
+
+        // 3. Show Popover immediately
+        setShowAnswerPopover(true);
+
+        // 4. Start Background Analysis
+        setIsAnalyzing(true);
         try {
             const analysis = await analyzeAnswer(
                 currentQuestion.text,
@@ -321,6 +334,7 @@ export const InterviewSession: React.FC = () => {
                 session.intakeData
             );
 
+            // Update with completed analysis
             saveAnswer(currentQuestion.id, {
                 audioBlob: pendingRecording,
                 text: analysis.transcript || currentTranscript,
@@ -329,15 +343,15 @@ export const InterviewSession: React.FC = () => {
 
             logAuditEvent('ANSWER_RECORDED', { questionId: currentQuestion.id, size: pendingRecording.size });
             setAnalysisReady(true);
-            setShowAnswerPopover(true);
         } catch (err) {
             console.error("Analysis failed", err);
+            // Even on error, we update so 'analysis' is not null
             saveAnswer(currentQuestion.id, {
                 audioBlob: pendingRecording,
                 text: currentTranscript,
                 analysis: null
             });
-            setAnalysisReady(true);
+            setAnalysisReady(true); // Allow loader to finish if active
         } finally {
             setIsAnalyzing(false);
             setPendingRecording(null);
@@ -385,10 +399,22 @@ export const InterviewSession: React.FC = () => {
             ];
         });
 
-        setShowLoader(true);
+        // 1. Set initial pending state
         setLoaderComplete(false);
         setAnalysisReady(false);
+        setShowLoader(false);
 
+        // 2. Save answer immediately (pending)
+        saveAnswer(currentQuestion.id, {
+            text: validText,
+            analysis: null
+        });
+
+        // 3. Show Popover immediately
+        setShowAnswerPopover(true);
+
+        // 4. Start Background Analysis
+        setIsAnalyzing(true);
         try {
             const analysisResult = await analyzeAnswer(
                 currentQuestion.text,
@@ -404,7 +430,6 @@ export const InterviewSession: React.FC = () => {
             });
             logAuditEvent('ANSWER_RECORDED', { questionId: currentQuestion.id, type: 'text', length: validText.length });
             setAnalysisReady(true);
-            setShowAnswerPopover(true);
         } catch (err) {
             saveAnswer(currentQuestion.id, {
                 text: validText,
@@ -477,14 +502,7 @@ export const InterviewSession: React.FC = () => {
 
     const hasSkippedQuestions = !allQuestionsAnswered && isLastQuestion;
 
-    const handlePopoverNext = () => {
-        if (hasSkippedQuestions) {
-            // Just dismiss the popover to allow manual navigation
-            setShowAnswerPopover(false);
-        } else {
-            handleNext();
-        }
-    };
+
 
     // Handle initial loading or empty state
     if (!currentQuestion) {
@@ -714,7 +732,7 @@ export const InterviewSession: React.FC = () => {
                                         </div>
 
                                         {/* Mode Toggle or Retry Button */}
-                                        {isAnswered ? (
+                                        {isAnswered && !showAnswerPopover ? (
                                             <div className="flex flex-col items-center gap-3">
                                                 <button
                                                     onClick={handleRetry}
@@ -760,18 +778,34 @@ export const InterviewSession: React.FC = () => {
                                         )}
 
                                         {/* Input Area */}
-                                        {!isAnswered && mode === 'voice' && (
+                                        {(!isAnswered || (showAnswerPopover && currentAnswer)) && mode === 'voice' && (
                                             <div className="flex-1 w-full flex flex-col items-center justify-start gap-4 animate-fade-in min-h-[200px] md:min-h-[300px]">
                                                 {/* Visualizer */}
                                                 <div className="w-full h-32 md:h-40 flex flex-col items-center justify-center relative gap-4">
                                                     {isRecording ? (
-                                                        <>
-                                                            <div className="w-full h-full relative flex items-center justify-center">
-                                                                <AudioVisualizer stream={mediaStream} isRecording={isRecording} />
-                                                            </div>
-                                                        </>
+                                                        <div className="w-full h-full relative flex items-center justify-center">
+                                                            <AudioVisualizer stream={mediaStream} isRecording={isRecording} />
+                                                        </div>
+                                                    ) : showAnswerPopover && currentAnswer ? (
+                                                        // INLINE Submission Popover (View Analysis)
+                                                        <SubmissionPopover
+                                                            isOpen={true} // Always open if rendered here
+                                                            onRetry={handleRetry}
+                                                            onFeedback={() => setShowLoader(true)}
+                                                            onNext={() => setShowAnswerPopover(false)}
+                                                            isSessionComplete={allQuestionsAnswered}
+                                                            onFinish={handleFinish}
+                                                            question={currentQuestion}
+                                                            questionIndex={session.currentQuestionIndex}
+                                                            answer={currentAnswer}
+                                                            blueprint={session.blueprint}
+                                                            hasSkippedQuestions={hasSkippedQuestions}
+                                                            onClose={() => setShowAnswerPopover(false)}
+                                                            inline={true} // New prop to indicate inline styling
+                                                        />
                                                     ) : showRecordingPopover ? (
                                                         // Submit/Retry Popover
+
                                                         <div className="flex flex-col items-center justify-center gap-4 animate-fadeIn">
                                                             <span className="text-white text-lg font-medium">Recording Complete</span>
                                                             <div className="flex gap-3">
@@ -827,32 +861,55 @@ export const InterviewSession: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {!isAnswered && mode === 'text' && (
+                                        {(!isAnswered || (showAnswerPopover && currentAnswer)) && mode === 'text' && (
                                             <div className="flex-1 flex flex-col items-center justify-start gap-6 animate-fade-in w-full max-w-2xl">
-                                                <div className="relative w-full group">
-                                                    <div className="absolute -inset-0.5 bg-linear-to-r from-cyan-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                                                    <div className="relative bg-zinc-900 ring-1 ring-white/10 rounded-2xl p-4 md:p-6 shadow-xl leading-none flex items-top justify-start space-x-6">
-                                                        <div className="space-y-4 w-full">
-                                                            <textarea
-                                                                autoFocus
-                                                                className="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-base md:text-lg min-h-[150px] leading-relaxed custom-scrollbar"
-                                                                placeholder="Type your answer here..."
-                                                                value={textAnswer}
-                                                                onChange={(e) => setTextAnswer(e.target.value)}
-                                                            />
-                                                            <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                                                                <span className="text-xs text-gray-500">{textAnswer.length} chars</span>
-                                                                <GlassButton
-                                                                    onClick={handleTextSubmit}
-                                                                    disabled={!textAnswer.trim() || isTextSubmitting}
-                                                                    className="bg-cyan-500 hover:bg-cyan-600 text-white border-0 shadow-lg shadow-cyan-500/20"
-                                                                >
-                                                                    Submit Answer <ArrowRight size={16} className="ml-2 text-white" />
-                                                                </GlassButton>
+                                                {showAnswerPopover && currentAnswer ? (
+                                                    // INLINE Submission Popover (Text Mode) - Rendered in place of input
+                                                    <div className="w-full h-40 flex flex-col items-center justify-center">
+                                                        <SubmissionPopover
+                                                            isOpen={true}
+                                                            onRetry={handleRetry}
+                                                            onFeedback={() => setShowLoader(true)}
+                                                            onNext={() => setShowAnswerPopover(false)}
+                                                            isSessionComplete={allQuestionsAnswered}
+                                                            onFinish={handleFinish}
+                                                            question={currentQuestion}
+                                                            questionIndex={session.currentQuestionIndex}
+                                                            answer={currentAnswer}
+                                                            blueprint={session.blueprint}
+                                                            hasSkippedQuestions={hasSkippedQuestions}
+                                                            onClose={() => setShowAnswerPopover(false)}
+                                                            inline={true}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    // ... Existing Text Input ...
+                                                    <div className="relative w-full group">
+
+                                                        <div className="absolute -inset-0.5 bg-linear-to-r from-cyan-500 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                                                        <div className="relative bg-zinc-900 ring-1 ring-white/10 rounded-2xl p-4 md:p-6 shadow-xl leading-none flex items-top justify-start space-x-6">
+                                                            <div className="space-y-4 w-full">
+                                                                <textarea
+                                                                    autoFocus
+                                                                    className="w-full bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-base md:text-lg min-h-[150px] leading-relaxed custom-scrollbar"
+                                                                    placeholder="Type your answer here..."
+                                                                    value={textAnswer}
+                                                                    onChange={(e) => setTextAnswer(e.target.value)}
+                                                                />
+                                                                <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                                                                    <span className="text-xs text-gray-500">{textAnswer.length} chars</span>
+                                                                    <GlassButton
+                                                                        onClick={handleTextSubmit}
+                                                                        disabled={!textAnswer.trim() || isTextSubmitting}
+                                                                        className="bg-cyan-500 hover:bg-cyan-600 text-white border-0 shadow-lg shadow-cyan-500/20"
+                                                                    >
+                                                                        Submit Answer <ArrowRight size={16} className="ml-2 text-white" />
+                                                                    </GlassButton>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -943,36 +1000,34 @@ export const InterviewSession: React.FC = () => {
 
                     </main>
 
-                    {/* Footer Controls (Cleaned up, no dots) */}
-                    <footer className="fixed bottom-0 left-0 right-0 md:static h-16 md:h-20 lg:h-24 border-t border-white/5 bg-zinc-950/50 backdrop-blur-md flex items-center justify-between px-4 md:px-8 z-20">
-                        <div className="flex items-center gap-2 md:gap-4">
-                            <GlassButton
-                                onClick={handlePrev}
-                                disabled={isFirstQuestion}
-                                variant="secondary"
-                                className="h-10 w-10 md:w-auto md:px-6 rounded-full flex items-center justify-center p-0 md:p-4"
-                                title="Previous Question"
-                            >
-                                <ChevronLeft size={20} className="md:mr-2" />
-                                <span className="hidden md:inline">Previous</span>
-                            </GlassButton>
+                    {/* Footer Controls */}
+                    <footer className="fixed bottom-0 left-0 right-0 md:static h-16 md:h-20 lg:h-24 border-t border-white/5 bg-zinc-950/50 backdrop-blur-md grid grid-cols-1 md:grid-cols-[30%_40%_30%] px-2 md:px-8 z-20 gap-6">
+                        {/* Middle Column Controls (Col 2) */}
+                        <div className="md:col-start-2 flex items-center justify-between w-full px-2 md:px-0">
+                            <div className="flex items-center gap-2 md:gap-4">
+                                <GlassButton
+                                    onClick={handlePrev}
+                                    disabled={isFirstQuestion}
+                                    variant="secondary"
+                                    className="h-10 w-10 md:w-auto md:px-6 rounded-full flex items-center justify-center p-0 md:p-4"
+                                    title="Previous Question"
+                                >
+                                    <ChevronLeft size={20} className="md:mr-2" />
+                                    <span className="hidden md:inline">Previous</span>
+                                </GlassButton>
 
-                            <GlassButton
-                                onClick={handleNextQuestion}
-                                disabled={isLastQuestion}
-                                variant="secondary"
-                                className="h-10 w-10 md:w-auto md:px-6 rounded-full flex items-center justify-center p-0 md:p-4"
-                                title="Next Question"
-                            >
-                                <span className="hidden md:inline">Next</span>
-                                <ChevronRight size={20} className="md:ml-2" />
-                            </GlassButton>
-                        </div>
+                                <GlassButton
+                                    onClick={handleNextQuestion}
+                                    disabled={isLastQuestion}
+                                    variant="secondary"
+                                    className="h-10 w-10 md:w-auto md:px-6 rounded-full flex items-center justify-center p-0 md:p-4"
+                                    title="Next Question"
+                                >
+                                    <span className="hidden md:inline">Next</span>
+                                    <ChevronRight size={20} className="md:ml-2" />
+                                </GlassButton>
+                            </div>
 
-                        {/* Middle Spacer (Dots removed per user request) */}
-                        <div className="hidden md:block flex-1" />
-
-                        <div className="flex items-center gap-3">
                             <GlassButton
                                 onClick={handleFinish}
                                 variant="outline"
@@ -1007,25 +1062,6 @@ export const InterviewSession: React.FC = () => {
                 onComplete={() => setLoaderComplete(true)}
             />
 
-            <SubmissionPopover
-                isOpen={!!currentAnswer && !showLoader && showAnswerPopover}
-                onRetry={handleRetry}
-                onFeedback={() => setShowPopover(true)}
-                onNext={handlePopoverNext}
-                isSessionComplete={allQuestionsAnswered}
-                onFinish={handleFinish}
-                question={currentQuestion}
-                questionIndex={session.currentQuestionIndex}
-                answer={currentQuestion ? answers[currentQuestion.id] ? {
-                    text: answers[currentQuestion.id].text || "",
-                    audioBlob: answers[currentQuestion.id].audioBlob,
-                    analysis: answers[currentQuestion.id].analysis
-                } : undefined : undefined}
-                blueprint={session.blueprint}
-                hasSkippedQuestions={hasSkippedQuestions}
-                onClose={() => setShowAnswerPopover(false)}
-            />
-
             <DebugInfoModal
                 isOpen={showDebugModal}
                 onClose={() => setShowDebugModal(false)}
@@ -1044,7 +1080,7 @@ export const InterviewSession: React.FC = () => {
                 } : { text: "", analysis: null } : { text: "", analysis: null }}
                 blueprint={session.blueprint}
             />
-        </div >
+        </div>
     );
 };
 

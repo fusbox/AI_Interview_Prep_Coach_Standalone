@@ -23,6 +23,7 @@ interface SubmissionPopoverProps {
     };
     blueprint?: CompetencyBlueprint;
     hasSkippedQuestions?: boolean;
+    inline?: boolean;
 }
 
 export const SubmissionPopover: React.FC<SubmissionPopoverProps> = ({
@@ -43,7 +44,7 @@ export const SubmissionPopover: React.FC<SubmissionPopoverProps> = ({
 
     if (!isOpen) return null;
 
-    // Feedback Modal Overlay
+    // Feedback Modal Overlay (Keep fixed overlay for the modal itself)
     if (showFeedback && question && answer) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:pl-64 bg-black/80 backdrop-blur-md animate-fade-in">
@@ -88,80 +89,42 @@ export const SubmissionPopover: React.FC<SubmissionPopoverProps> = ({
         );
     }
 
+    // If session complete, show special state (Text only, transparent inline)
+    if (isSessionComplete) {
+        return (
+            <div className="flex flex-col items-center gap-4 animate-fade-in">
+                <div className="text-center space-y-2">
+                    <h3 className="text-lg font-medium text-white">Session Complete!</h3>
+                    <p className="text-gray-400 text-sm">Great job. Click Finish below to review.</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Standard View Answer Analysis (Text + Buttons, transparent inline)
     return (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:pl-64 bg-black/80 backdrop-blur-md animate-fade-in">
-            <GlassCard className="min-h-[384px] w-full max-w-md bg-zinc-900/90 border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.15)] flex flex-col items-center justify-center gap-6 p-8 relative overflow-hidden">
-                {/* Close Button */}
-                {onClose && (
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 p-2 rounded-full text-zinc-500 hover:text-white hover:bg-white/10 transition-colors z-20"
-                    >
-                        <X size={20} />
-                    </button>
-                )}
-                {/* Decorative Glow */}
-                <div className="absolute -top-20 -left-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col items-center gap-4 animate-fade-in pointer-events-none">
+            <h3 className="text-lg font-medium text-white text-center">
+                View Answer Analysis?
+            </h3>
 
-                <div className="text-center space-y-2 relative z-10 w-full animate-fade-in-up">
-                    <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-white to-cyan-100 font-display">
-                        "{answer?.analysis?.coachReaction || "Got It!"}"
-                    </h3>
-                    <p className="text-cyan-300/80 text-sm font-medium tracking-wide">
-                        What would you like to do next?
-                    </p>
-                </div>
+            <div className="flex gap-3">
+                {/* After (Close) */}
+                <button
+                    onClick={onNext} // Uses onNext prop passed as closing handler
+                    className="pointer-events-auto px-6 py-2.5 rounded-lg border border-cyan-500/50 text-cyan-400 font-medium hover:bg-cyan-500/10 hover:border-cyan-400 transition-all text-sm"
+                >
+                    After the Interview
+                </button>
 
-                <div className="grid grid-cols-1 gap-3 relative z-10 w-full">
-                    <GlassButton
-                        onClick={isSessionComplete && onFinish ? onFinish : onNext}
-                        className={cn(
-                            "w-full h-14 text-base text-white border-none shadow-lg font-semibold",
-                            isSessionComplete
-                                ? "bg-linear-to-r from-emerald-600 to-emerald-500 hover:to-emerald-400 shadow-emerald-900/20"
-                                : hasSkippedQuestions
-                                    ? "bg-linear-to-r from-cyan-600 to-cyan-500 hover:to-cyan-400 shadow-cyan-900/20"
-                                    : "bg-linear-to-r from-cyan-600 to-cyan-500 hover:to-cyan-400 shadow-cyan-900/20"
-                        )}
-                    >
-                        {isSessionComplete ? (
-                            <>
-                                <Save size={18} className="mr-2" />
-                                Save & Review Session
-                            </>
-                        ) : hasSkippedQuestions ? (
-                            <>
-                                <List size={18} className="mr-2" />
-                                Select Another Question
-                            </>
-                        ) : (
-                            <>
-                                <ArrowRight size={18} className="mr-2" />
-                                Go To Next Question
-                            </>
-                        )}
-                    </GlassButton>
-
-                    {answer?.analysis && (
-                        <button
-                            onClick={() => setShowFeedback(true)}
-                            className="w-full h-14 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-cyan-300 text-base font-semibold transition-all flex items-center justify-center gap-2 group"
-                        >
-                            <Activity size={18} className="text-cyan-400 group-hover:scale-110 transition-transform" />
-                            See Coach's Feedback
-                        </button>
-                    )}
-
-                    <button
-                        onClick={onRetry}
-                        className="w-full h-14 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-base font-semibold flex items-center justify-center gap-2"
-                    >
-                        <RefreshCcw size={18} />
-                        Discard & Try Again
-                    </button>
-
-                </div>
-            </GlassCard>
+                {/* Now (Feedback) */}
+                <button
+                    onClick={onFeedback}
+                    className="pointer-events-auto px-6 py-2.5 rounded-lg border border-cyan-500/50 text-cyan-400 font-medium hover:bg-cyan-500/10 hover:border-cyan-400 transition-all text-sm"
+                >
+                    Now
+                </button>
+            </div>
         </div>
     );
 };
