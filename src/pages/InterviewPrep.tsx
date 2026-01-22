@@ -40,7 +40,6 @@ export const InterviewPrep: React.FC = () => {
 
         // Only fetch coach prep if not already cached
         if (!cachedCoachPrep) {
-            console.log("[InterviewPrep] No cached prep, fetching...");
             generateCoachPrep(role, jobDescription)
                 .then(data => {
                     setPrepData(data);
@@ -50,14 +49,11 @@ export const InterviewPrep: React.FC = () => {
                     console.error("Coach prep failed:", err);
                     setIsPrepLoading(false);
                 });
-        } else {
-            console.log("[InterviewPrep] Using cached coach prep");
         }
 
         // Slow: Full session init (background)
         startSession(role, jobDescription, intakeData)
             .then(() => {
-                console.log("[InterviewPrep] Session ready");
                 setIsSessionReady(true);
             })
             .catch(err => {

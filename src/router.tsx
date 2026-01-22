@@ -19,8 +19,6 @@ import { UserDataRights } from './features/UserDataRights';
 export const router = createBrowserRouter([
     { path: '/', element: <Home /> },
     { path: '/auth', element: <Auth /> },
-
-    // NEW UI: Main App Routes (Glass UI)
     {
         element: (
             <ErrorBoundary>

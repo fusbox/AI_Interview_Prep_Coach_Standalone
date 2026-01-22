@@ -136,9 +136,9 @@ export interface InterviewSession {
     analysis: AnalysisResult | null;
   }>;
   status?: 'IDLE' | 'ACTIVE' | 'COMPLETED';
-  // New: Store the blueprint for this session
+  // Store the blueprint for this session
   blueprint?: CompetencyBlueprint;
-  // New: Store intake data for context persistence
+  // Store intake data for context persistence
   intakeData?: import('./intake').OnboardingIntakeV1;
 }
 

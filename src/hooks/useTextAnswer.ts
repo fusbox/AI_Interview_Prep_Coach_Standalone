@@ -41,8 +41,8 @@ export function useTextAnswer() {
     };
 
     return {
-        textAnswer: text,        // Changed to textAnswer to match consumption
-        setTextAnswer: setText,  // Exposed setter
+        textAnswer: text,        
+        setTextAnswer: setText,  
         error,
         handleTextChange,
         submitTextAnswer,

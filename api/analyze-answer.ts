@@ -89,7 +89,6 @@ Ratings Bands: ${JSON.stringify(blueprint.scoringModel.ratingBands)}
 
             // Confidence / Struggle Context
             let struggleContext = "";
-            // const { intakeData } = req.body; // Removed duplicate declaration
 
 
             if (intakeData?.biggestStruggle) {
@@ -200,8 +199,6 @@ ${readingLevelContext}
                     deliveryTips: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
                     keyTerms: { type: Type.ARRAY, items: { type: Type.STRING } },
                     rating: { type: Type.STRING },
-
-                    // New Fields
                     answerScore: { type: Type.NUMBER },
                     dimensionScores: {
                         type: Type.ARRAY,

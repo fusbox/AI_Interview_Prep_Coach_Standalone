@@ -54,7 +54,7 @@ export const DashboardLayout: React.FC = () => {
             <aside
                 className={cn(
                     "fixed inset-y-0 left-0 z-50 w-64 border-r border-white/10 transition-transform duration-300 md:translate-x-0",
-                    "bg-zinc-950/90 backdrop-blur-xl md:glass-panel md:bg-transparent", // Mobile: Opaque/Frosted. Desktop: Standard Glass.
+                    "bg-zinc-950/90 backdrop-blur-xl md:glass-panel md:bg-transparent",
                     !sidebarOpen && "-translate-x-full md:translate-x-0"
                 )}
             >

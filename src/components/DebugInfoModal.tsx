@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-// // import rehypeRaw from 'rehype-raw'; // Removed for XSS remediation // Removed for XSS remediation
 import { GlassCard } from './ui/glass/GlassCard';
 import { X, Copy, Database, Check } from 'lucide-react';
 import { InterviewSession } from '../types';
@@ -15,10 +14,8 @@ interface DebugInfoModalProps {
 export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose, session }) => {
     if (!isOpen) return null;
 
-    // Helper: Generate Markdown Report
     const generateMarkdownReport = () => {
         const { blueprint, questions, currentQuestionIndex, answers, intakeData } = session;
-        // Safe access to current question
         const currentQ = (questions && questions.length > currentQuestionIndex) ? questions[currentQuestionIndex] : null;
         if (!currentQ) return "No question active.";
 
@@ -26,15 +23,12 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         const analysis = currentAnswer?.analysis;
 
         let report = `# Competency-Driven Interview Session Debug Report\n\n`;
-
-        // Section 1: Target Role / JD
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 1. Target Role / JD\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (blueprint && blueprint.role) {
             report += `**Role:** ${blueprint.role.title}\n`;
             report += `**Seniority:** ${blueprint.role.seniority || 'N/A'}\n`;
-            // Truncate JD if too long for display
             const jdPreview = session.jobDescription
                 ? (session.jobDescription.substring(0, 150) + (session.jobDescription.length > 150 ? '...' : ''))
                 : 'N/A';
@@ -42,11 +36,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         } else {
             report += `_(Role data missing)_\n\n`;
         }
-
-        // Section 2: Intake Items / Values
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 2. Intake Items / Values\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (intakeData) {
             report += `- **Stage:** ${intakeData.stage}\n`;
             report += `- **Biggest Struggle:** ${intakeData.biggestStruggle}\n`;
@@ -56,11 +48,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         } else {
             report += `_(Intake data missing)_\n\n`;
         }
-
-        // Section 3: Competency Blueprint (A1)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 3. Competency Blueprint (A1)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (blueprint) {
             report += `**Role:** ${blueprint.role.title} (${blueprint.role.seniority || 'N/A'})\n`;
             report += `**Reading Level:** ${blueprint.readingLevel?.mode} (Max words: ${blueprint.readingLevel?.maxSentenceWords || 'N/A'})\n\n`;
@@ -83,13 +73,13 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         } else {
             report += `_(Blueprint missing)_\n\n`;
         }
-        report += `---\n\n`; // Separator
+        report += `====================================================================\n\n`;
 
         // Section 2: Question Plan (B1)
         // Section 4: Question Plan (B1)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 4. Question Plan (B1)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
 
         questions?.forEach((q) => {
             const typeLabel = q.type ? `[${q.type}]` : 'N/A';
@@ -105,21 +95,15 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
             }
         });
         report += `---\n\n`;
-
-        // Section 3: Question Text (C1)
-        // Section 5: Question Text (C1)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 5. Active Question (C1)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         report += `**${currentQ.id}:** "${currentQ.text}"\n`;
         report += `(Type: ${currentQ.type}, Difficulty: ${currentQ.difficulty}, C-ID: ${currentQ.competencyId})\n\n`;
         report += `---\n\n`;
-
-        // Section 4: Micro-Acknowledgement (F1)
-        // Section 6: Micro-Acknowledgement (F1)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 6. Micro-Acknowledgement (F1)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (analysis?.coachReaction) {
             report += `> "${analysis.coachReaction}"\n`;
         } else {
@@ -127,11 +111,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
         }
         report += `\n---\n\n`;
 
-        // Section 5: Answer Text
-        // Section 7: Answer Text
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 7. Answer Text\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (currentAnswer?.text) {
             report += `"${currentAnswer.text}"\n`;
         } else if (currentAnswer?.audioBlob) {
@@ -140,12 +122,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
             report += `_(No answer yet)_\n`;
         }
         report += `\n---\n\n`;
-
-        // Section 6: Speaking Delivery (G1)
-        // Section 8: Speaking Delivery (G1)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 8. Speaking Delivery (G1)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (analysis?.deliveryStatus) {
             report += `- **Status:** ${analysis.deliveryStatus}\n`;
             if (analysis.deliveryTips && analysis.deliveryTips.length > 0) {
@@ -155,12 +134,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
             report += `_(N/A or Text Mode)_\n`;
         }
         report += `\n---\n\n`;
-
-        // Section 7: Answer Evaluation (D1 & D2)
-        // Section 9: Answer Evaluation (D1 & D2)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 9. Answer Evaluation (D1 & D2)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (analysis?.answerScore) {
             report += `**Rating:** ${analysis.rating} (${analysis.answerScore}/100)\n\n`;
 
@@ -193,12 +169,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
             report += `_(Evaluation pending)_\n`;
         }
         report += `\n---\n\n`;
-
-        // Section 8: Feedback (E1)
-        // Section 10: Feedback (E1)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 10. Feedback (E1)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         if (analysis) {
             report += `### Key Feedback\n`;
             analysis.feedback?.forEach(f => report += `- ${f}\n`);
@@ -209,12 +182,9 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
             }
         }
         report += `\n---\n\n`;
-
-        // Section 9: Session Aggregation (H2)
-        // Section 11: Session Aggregation (H2)
-        report += `================================================================================\n`;
+        report += `====================================================================\n`;
         report += `# 11. Session Aggregation (H2)\n`;
-        report += `================================================================================\n\n`;
+        report += `====================================================================\n\n`;
         const allAnswered = Object.values(session.answers).filter(a => a.analysis?.answerScore);
         if (allAnswered.length > 0) {
             const avgScore = Math.round(allAnswered.reduce((sum, a) => sum + (a.analysis?.answerScore || 0), 0) / allAnswered.length);
@@ -226,8 +196,6 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
 
         return report;
     };
-
-    // Ref for the rendered content
     const contentRef = React.useRef<HTMLDivElement>(null);
     const [isCopied, setIsCopied] = React.useState(false);
 
@@ -237,7 +205,6 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
             const plainText = contentRef.current.innerText;
 
             try {
-                // Use Clipboard API with HTML format for rich text pasting
                 await navigator.clipboard.write([
                     new ClipboardItem({
                         'text/html': new Blob([html], { type: 'text/html' }),

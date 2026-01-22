@@ -15,7 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { useGuestTracker } from '../hooks/useGuestTracker';
 import { ReviewQuestionItem } from '../components/ui/glass/ReviewQuestionItem';
 
-// --- Helper Functions (Moved Outside) ---
+// --- Helper Functions
 const getScoreColor = (score: number) => {
     if (score >= 80) return "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]";
     if (score >= 60) return "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]";
@@ -85,7 +85,7 @@ export const InterviewReview: React.FC = () => {
         return { score: finalScore, stats, questionsWithAnalysis };
     }, [session]);
 
-    // PERSISTENCE LOGIC (Ported from Legacy Summary.tsx)
+    // PERSISTENCE LOGIC
     const { user } = useAuth();
     const { markSessionComplete } = useGuestTracker();
     const historyId = React.useRef<string | null>(null);

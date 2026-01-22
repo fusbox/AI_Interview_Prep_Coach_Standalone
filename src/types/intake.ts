@@ -8,7 +8,7 @@ export type BiggestStruggle =
     | "behavioral_storytelling"
     | "weaknesses_gaps"
     | "nerves_anxiety"
-    | ""; // Added empty state
+    | "";
 
 export type ChallengeLevel = "warm_up" | "realistic" | "challenge";
 
@@ -26,13 +26,13 @@ export type InterviewStage =
     | "hiring_manager"
     | "panel"
     | "final_round"
-    | ""; // Added empty state
+    | "";
 
 
 export interface OnboardingIntakeV1 {
     intakeVersion: "v1";
     confidenceScore: ConfidenceScore;
-    biggestStruggle: BiggestStruggle; // No longer has a default in type definition, handled in runtime
+    biggestStruggle: BiggestStruggle;
     challengeLevel: ChallengeLevel;
     primaryGoal: PrimaryGoal;
     stage: InterviewStage;

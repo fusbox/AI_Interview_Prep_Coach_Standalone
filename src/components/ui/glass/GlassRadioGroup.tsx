@@ -14,7 +14,7 @@ interface GlassRadioGroupProps {
     onChange: (value: string) => void;
     name?: string;
     className?: string;
-    columns?: 1 | 2 | 'auto';  // 'auto' = 2 columns if >3 options
+    columns?: 1 | 2 | 'auto';
 }
 
 export const GlassRadioGroup: React.FC<GlassRadioGroupProps> = ({

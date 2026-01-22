@@ -66,7 +66,6 @@ export default async function handler(req, res) {
 
         // Struggle Context
         let struggleContext = "";
-        // reuse intakeData from destructuring above
         if (intakeData?.biggestStruggle) {
             const s = intakeData.biggestStruggle;
             struggleContext = `

@@ -44,18 +44,15 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream, isRecording }
       let barHeight;
       let x = 0;
 
-      // Draw rounded bars
       for (let i = 0; i < bufferLength; i++) {
         barHeight = dataArray[i] / 2;
 
-        // Rangam Blue color palette (#376497 is approx 55, 100, 151)
         const r = 55;
         const g = 100;
         const b = 151;
 
         ctx.fillStyle = `rgba(${r},${g},${b}, ${0.5 + (barHeight / 200)})`;
 
-        // Draw rounded rect
         ctx.beginPath();
         ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, 5);
         ctx.fill();

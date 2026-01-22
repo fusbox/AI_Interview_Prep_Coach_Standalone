@@ -65,7 +65,7 @@ export const ResumeUploadZone: React.FC = () => {
         setTimeout(() => {
             setUploading(false);
             setUploadSuccess(true);
-            // Here you would normally send the file to your backend
+            // Here you would normally send the file to backend
             console.log("File uploaded:", file.name);
         }, 2000);
     };

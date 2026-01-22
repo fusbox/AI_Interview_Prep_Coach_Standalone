@@ -12,8 +12,6 @@ interface CoachPrepScreenProps {
     onBegin: () => void;
     role: string;
 }
-
-// Helper: Highlight key skills in advice text with cyan
 const highlightSkills = (text: string, skills: string[]): React.ReactNode => {
     if (!skills || skills.length === 0) return text;
 

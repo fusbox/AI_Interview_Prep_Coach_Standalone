@@ -36,17 +36,14 @@ export const InterviewSetup: React.FC = () => {
         setShowIntake(true);
 
         // Pre-fetch coach prep in background while user fills intake wizard
-        console.log("[Setup] Pre-fetching coach prep...");
         generateCoachPrep(role, jobDescription)
             .then(data => {
                 coachPrepRef.current = data;
-                console.log("[Setup] Coach prep pre-fetched:", data?.greeting);
             })
             .catch(err => console.warn("[Setup] Coach prep pre-fetch failed:", err));
     };
 
     const handleStartSession = (intakeData: OnboardingIntakeV1 = DEFAULT_ONBOARDING_INTAKE_V1) => {
-        console.log("handleStartSession triggered with intake:", intakeData);
 
         if (!jobDescription.trim() || !role.trim()) {
             console.warn("Missing fields");

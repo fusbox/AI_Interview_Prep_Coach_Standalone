@@ -69,16 +69,8 @@ export const UserDataRights: React.FC = () => {
             // 1. Log the intent (last log before death)
             await logAuditEvent('ACCOUNT_DELETION_REQUESTED');
 
-            // 2. Call Supabase Edge Function to delete user (if we had one) or minimal cleanup
-            // Since we can't easily delete Auth User from client, we will scrub the data we CAN access via RLS
-            // and sign them out. 
-            // NOTE: True deletion requires a Supabase Admin function.
-            // For now, we will delete 'interviews' and 'profiles' rows which we own.
-
             await supabase.from('interviews').delete().eq('user_id', user.id);
             await supabase.from('profiles').delete().eq('id', user.id);
-            // We usually keep audit logs for compliance, or soft delete them. 
-            // If strictly "Right to Erasure", we delete logs too.
             await supabase.from('audit_logs').delete().eq('user_id', user.id);
 
             await supabase.auth.signOut();

@@ -4,12 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Fix __dirname for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-// Load Env
 const loadEnv = (file) => {
     const p = path.resolve(rootDir, file);
     if (fs.existsSync(p)) {
@@ -36,7 +34,6 @@ if (!process.env.GEMINI_API_KEY) {
     process.exit(1);
 }
 
-// Mock Req/Res
 const req = {
     method: 'POST',
     headers: {},

@@ -17,7 +17,6 @@ export const GlassTooltip: React.FC<GlassTooltipProps> = ({
 }) => {
     const [isVisible, setIsVisible] = useState(false);
 
-    // Simple positioning logic (can be enhanced with floating-ui if needed, but keeping it lightweight)
     const positionClasses = {
         top: "-top-2 left-1/2 -translate-x-1/2 -translate-y-full mb-2",
         bottom: "-bottom-2 left-1/2 -translate-x-1/2 translate-y-full mt-2",

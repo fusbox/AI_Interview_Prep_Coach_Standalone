@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     - When in doubt: Prioritize simplicity.
         `;
 
-        // New: Confidence / Tone Context
+        // Confidence / Tone Context
         let confidenceContext = "";
         if (intakeData?.confidenceScore) {
             confidenceContext = `
@@ -108,7 +108,7 @@ export default async function handler(req, res) {
         let schema;
 
         if (questionPlan) {
-            // New Flow: Generate Text from Plan
+            // Generate Text from Plan
             promptInfo = `
 CONVERT THIS PLAN INTO INTERVIEW QUESTIONS.
 PLAN:
@@ -130,7 +130,6 @@ CONSTRAINTS:
                     properties: {
                         id: { type: Type.STRING },
                         text: { type: Type.STRING },
-                        // Pass through metadata
                         competencyId: { type: Type.STRING },
                         type: { type: Type.STRING },
                         difficulty: { type: Type.STRING },
