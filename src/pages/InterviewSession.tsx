@@ -19,6 +19,7 @@ import { TipsAndTranscriptContent, TranscriptItem } from '../components/session/
 import { SessionLoader } from '../components/ui/glass/SessionLoader';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MultiStepLoader } from '../components/ui/glass/MultiStepLoader';
+import { RecordingConfirmationModal } from '../components/modals/RecordingConfirmationModal';
 
 export const InterviewSession: React.FC = () => {
     const navigate = useNavigate();
@@ -1081,6 +1082,34 @@ export const InterviewSession: React.FC = () => {
                     analysis: answers[currentQuestion.id].analysis
                 } : { text: "", analysis: null } : { text: "", analysis: null }}
                 blueprint={session.blueprint}
+            />
+
+            <RecordingConfirmationModal
+                isOpen={showRecordingPopover}
+                onConfirm={handleSubmitRecording}
+                onRetry={handleRetryRecording}
+            />
+
+            <SubmissionPopover
+                isOpen={showAnswerPopover && !!currentAnswer}
+                onRetry={handleRetry}
+                onFeedback={() => {
+                    if (currentAnswer?.analysis) {
+                        setShowPopover(true);
+                    } else {
+                        setShowLoader(true);
+                    }
+                    setShowAnswerPopover(false);
+                }}
+                onNext={() => setShowAnswerPopover(false)}
+                isSessionComplete={allQuestionsAnswered}
+                onFinish={handleFinish}
+                question={currentQuestion}
+                questionIndex={session.currentQuestionIndex}
+                answer={currentAnswer}
+                blueprint={session.blueprint}
+                hasSkippedQuestions={hasSkippedQuestions}
+                onClose={() => setShowAnswerPopover(false)}
             />
         </div>
     );

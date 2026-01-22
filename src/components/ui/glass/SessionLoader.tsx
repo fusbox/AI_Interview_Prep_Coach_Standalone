@@ -54,7 +54,7 @@ export const SessionLoader: React.FC<SessionLoaderProps> = ({ isLoading, onTrans
             {stage !== 'complete' && (
                 <motion.div
                     key="loader-overlay"
-                    className="fixed inset-0 z-100 flex flex-col items-center justify-center backdrop-blur-md bg-black/90 overflow-hidden"
+                    className="fixed inset-0 z-100 flex flex-col items-center justify-center backdrop-blur-md bg-black/90 overflow-hidden md:pl-64"
                     initial={{ opacity: 1 }}
                     exit={{ opacity: 0, transition: { duration: 0.5, ease: "easeInOut" } }}
                 >
