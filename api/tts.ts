@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { validateUser } from './utils/auth.js';
-import { logger } from '../src/utils/logger';
+import { logger } from './utils/logger.js';
 
 // --- In-Memory Rate Limiter (Container Scope) ---
 const RATE_LIMIT_WINDOW = 10 * 1000; // 10 seconds

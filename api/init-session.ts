@@ -1,39 +1,39 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { validateUser } from './utils/auth';
 import { InitSessionSchema } from '../src/schemas/apiSchemas';
-import { logger } from '../src/utils/logger';
+import { logger } from './utils/logger.js';
 
 export default async function handler(req: any, res: any) {
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  try {
-    await validateUser(req);
-
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
-    const parseResult = InitSessionSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid request body', details: parseResult.error.format() });
-    }
+    try {
+        await validateUser(req);
 
-    const { role, jobDescription, intakeData } = parseResult.data;
+        if (req.method !== 'POST') {
+            return res.status(405).json({ error: 'Method Not Allowed' });
+        }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
-    }
+        const parseResult = InitSessionSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res
+                .status(400)
+                .json({ error: 'Invalid request body', details: parseResult.error.format() });
+        }
 
-    const ai = new GoogleGenAI({ apiKey });
+        const { role, jobDescription, intakeData } = parseResult.data;
 
-    let intakeContext = '';
-    if (intakeData) {
-      intakeContext = `
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+        }
+
+        const ai = new GoogleGenAI({ apiKey });
+
+        let intakeContext = '';
+        if (intakeData) {
+            intakeContext = `
             USER PREFERENCES (INTAKE):
             - Confidence Level: ${intakeData.confidenceScore}/5 (Adapt tone accordingly)
             - Biggest Struggle: ${intakeData.biggestStruggle} (Focus help here)
@@ -42,9 +42,9 @@ export default async function handler(req: any, res: any) {
             - Stage: ${intakeData.stage}
             - Must Practice: ${intakeData.mustPracticeQuestions?.join(', ') || 'None'}
             `;
-    }
+        }
 
-    const prompt = `
+        const prompt = `
         ACT AS: Expert Interview Coach.
         TASK: Prepare an interview session for a candidate applying for: "${role}".
         CONTEXT: ${jobDescription ? `Job Description: ${jobDescription}` : 'General Role'}
@@ -81,149 +81,149 @@ export default async function handler(req: any, res: any) {
         }
         `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            blueprint: {
-              type: Type.OBJECT,
-              properties: {
-                role: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    seniority: { type: Type.STRING },
-                  },
-                  required: ['title'],
-                },
-                readingLevel: {
-                  type: Type.OBJECT,
-                  properties: {
-                    mode: { type: Type.STRING },
-                    maxSentenceWords: { type: Type.INTEGER },
-                    avoidJargon: { type: Type.BOOLEAN },
-                  },
-                  required: ['mode', 'maxSentenceWords', 'avoidJargon'],
-                },
-                competencies: {
-                  type: Type.ARRAY,
-                  items: {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                      id: { type: Type.STRING },
-                      name: { type: Type.STRING },
-                      definition: { type: Type.STRING },
-                      signals: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      evidenceExamples: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      weight: { type: Type.INTEGER },
-                      bands: {
-                        type: Type.OBJECT,
-                        properties: {
-                          Developing: { type: Type.STRING },
-                          Good: { type: Type.STRING },
-                          Strong: { type: Type.STRING },
+                        blueprint: {
+                            type: Type.OBJECT,
+                            properties: {
+                                role: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        title: { type: Type.STRING },
+                                        seniority: { type: Type.STRING },
+                                    },
+                                    required: ['title'],
+                                },
+                                readingLevel: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        mode: { type: Type.STRING },
+                                        maxSentenceWords: { type: Type.INTEGER },
+                                        avoidJargon: { type: Type.BOOLEAN },
+                                    },
+                                    required: ['mode', 'maxSentenceWords', 'avoidJargon'],
+                                },
+                                competencies: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            id: { type: Type.STRING },
+                                            name: { type: Type.STRING },
+                                            definition: { type: Type.STRING },
+                                            signals: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                            evidenceExamples: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                            weight: { type: Type.INTEGER },
+                                            bands: {
+                                                type: Type.OBJECT,
+                                                properties: {
+                                                    Developing: { type: Type.STRING },
+                                                    Good: { type: Type.STRING },
+                                                    Strong: { type: Type.STRING },
+                                                },
+                                                required: ['Developing', 'Good', 'Strong'],
+                                            },
+                                        },
+                                        required: [
+                                            'id',
+                                            'name',
+                                            'definition',
+                                            'signals',
+                                            'evidenceExamples',
+                                            'weight',
+                                            'bands',
+                                        ],
+                                    },
+                                },
+                                scoringModel: {
+                                    type: Type.OBJECT,
+                                    properties: {
+                                        dimensions: {
+                                            type: Type.ARRAY,
+                                            items: {
+                                                type: Type.OBJECT,
+                                                properties: {
+                                                    id: { type: Type.STRING },
+                                                    name: { type: Type.STRING },
+                                                    weight: { type: Type.INTEGER },
+                                                },
+                                                required: ['id', 'name', 'weight'],
+                                            },
+                                        },
+                                        ratingBands: {
+                                            type: Type.OBJECT,
+                                            properties: {
+                                                Developing: {
+                                                    type: Type.OBJECT,
+                                                    properties: { min: { type: Type.INTEGER }, max: { type: Type.INTEGER } },
+                                                    required: ['min', 'max'],
+                                                },
+                                                Good: {
+                                                    type: Type.OBJECT,
+                                                    properties: { min: { type: Type.INTEGER }, max: { type: Type.INTEGER } },
+                                                    required: ['min', 'max'],
+                                                },
+                                                Strong: {
+                                                    type: Type.OBJECT,
+                                                    properties: { min: { type: Type.INTEGER }, max: { type: Type.INTEGER } },
+                                                    required: ['min', 'max'],
+                                                },
+                                            },
+                                            required: ['Developing', 'Good', 'Strong'],
+                                        },
+                                    },
+                                    required: ['dimensions', 'ratingBands'],
+                                },
+                            },
+                            required: ['role', 'readingLevel', 'competencies', 'scoringModel'],
                         },
-                        required: ['Developing', 'Good', 'Strong'],
-                      },
+                        questionPlan: {
+                            type: Type.OBJECT,
+                            properties: {
+                                questions: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            id: { type: Type.STRING },
+                                            competencyId: { type: Type.STRING },
+                                            type: { type: Type.STRING },
+                                            difficulty: { type: Type.STRING },
+                                            intent: { type: Type.STRING },
+                                        },
+                                        required: ['id', 'competencyId', 'type', 'difficulty', 'intent'],
+                                    },
+                                },
+                            },
+                            required: ['questions'],
+                        },
+                        firstQuestion: {
+                            type: Type.OBJECT,
+                            properties: {
+                                id: { type: Type.STRING },
+                                text: { type: Type.STRING },
+                            },
+                            required: ['id', 'text'],
+                        },
                     },
-                    required: [
-                      'id',
-                      'name',
-                      'definition',
-                      'signals',
-                      'evidenceExamples',
-                      'weight',
-                      'bands',
-                    ],
-                  },
+                    required: ['blueprint', 'questionPlan', 'firstQuestion'],
                 },
-                scoringModel: {
-                  type: Type.OBJECT,
-                  properties: {
-                    dimensions: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          id: { type: Type.STRING },
-                          name: { type: Type.STRING },
-                          weight: { type: Type.INTEGER },
-                        },
-                        required: ['id', 'name', 'weight'],
-                      },
-                    },
-                    ratingBands: {
-                      type: Type.OBJECT,
-                      properties: {
-                        Developing: {
-                          type: Type.OBJECT,
-                          properties: { min: { type: Type.INTEGER }, max: { type: Type.INTEGER } },
-                          required: ['min', 'max'],
-                        },
-                        Good: {
-                          type: Type.OBJECT,
-                          properties: { min: { type: Type.INTEGER }, max: { type: Type.INTEGER } },
-                          required: ['min', 'max'],
-                        },
-                        Strong: {
-                          type: Type.OBJECT,
-                          properties: { min: { type: Type.INTEGER }, max: { type: Type.INTEGER } },
-                          required: ['min', 'max'],
-                        },
-                      },
-                      required: ['Developing', 'Good', 'Strong'],
-                    },
-                  },
-                  required: ['dimensions', 'ratingBands'],
-                },
-              },
-              required: ['role', 'readingLevel', 'competencies', 'scoringModel'],
             },
-            questionPlan: {
-              type: Type.OBJECT,
-              properties: {
-                questions: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      id: { type: Type.STRING },
-                      competencyId: { type: Type.STRING },
-                      type: { type: Type.STRING },
-                      difficulty: { type: Type.STRING },
-                      intent: { type: Type.STRING },
-                    },
-                    required: ['id', 'competencyId', 'type', 'difficulty', 'intent'],
-                  },
-                },
-              },
-              required: ['questions'],
-            },
-            firstQuestion: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                text: { type: Type.STRING },
-              },
-              required: ['id', 'text'],
-            },
-          },
-          required: ['blueprint', 'questionPlan', 'firstQuestion'],
-        },
-      },
-    });
+        });
 
-    const text = response.text;
-    if (!text) throw new Error('No text returned from Gemini');
+        const text = response.text;
+        if (!text) throw new Error('No text returned from Gemini');
 
-    const result = JSON.parse(text);
-    return res.status(200).json(result);
-  } catch (error: any) {
-    logger.error('Unified Init Error', error);
-    return res.status(500).json({ error: 'Failed to initialize session', details: error.message });
-  }
+        const result = JSON.parse(text);
+        return res.status(200).json(result);
+    } catch (error: any) {
+        logger.error('Unified Init Error', error);
+        return res.status(500).json({ error: 'Failed to initialize session', details: error.message });
+    }
 }

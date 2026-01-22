@@ -1,35 +1,35 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { validateUser } from './utils/auth.js';
-import { logger } from '../src/utils/logger';
+import { logger } from './utils/logger.js';
 
 export default async function handler(req: any, res: any) {
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  try {
-    await validateUser(req);
-
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
-    const { blueprint } = req.body || {};
+    try {
+        await validateUser(req);
 
-    if (!blueprint) {
-      return res.status(400).json({ error: 'Missing "blueprint" in request body' });
-    }
+        if (req.method !== 'POST') {
+            return res.status(405).json({ error: 'Method Not Allowed' });
+        }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
-    }
+        const { blueprint } = req.body || {};
 
-    const ai = new GoogleGenAI({ apiKey });
+        if (!blueprint) {
+            return res.status(400).json({ error: 'Missing "blueprint" in request body' });
+        }
 
-    const N_QUESTIONS = 5;
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+        }
 
-    const systemPrompt = `
+        const ai = new GoogleGenAI({ apiKey });
+
+        const N_QUESTIONS = 5;
+
+        const systemPrompt = `
 You are an interview designer. Build a balanced question plan aligned to the competency blueprint.
 
 USER
@@ -46,46 +46,46 @@ INPUT BLUEPRINT JSON:
 ${JSON.stringify(blueprint)}
 `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: systemPrompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            role: { type: Type.STRING },
-            questions: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  competencyId: { type: Type.STRING },
-                  type: { type: Type.STRING, enum: ['behavioral', 'situational', 'technical'] },
-                  difficulty: { type: Type.STRING, enum: ['easy', 'medium', 'hard'] },
-                  intent: { type: Type.STRING },
-                  rubricHints: { type: Type.ARRAY, items: { type: Type.STRING } },
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: systemPrompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        role: { type: Type.STRING },
+                        questions: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    id: { type: Type.STRING },
+                                    competencyId: { type: Type.STRING },
+                                    type: { type: Type.STRING, enum: ['behavioral', 'situational', 'technical'] },
+                                    difficulty: { type: Type.STRING, enum: ['easy', 'medium', 'hard'] },
+                                    intent: { type: Type.STRING },
+                                    rubricHints: { type: Type.ARRAY, items: { type: Type.STRING } },
+                                },
+                                required: ['id', 'competencyId', 'type', 'difficulty', 'intent'],
+                            },
+                        },
+                    },
+                    required: ['role', 'questions'],
                 },
-                required: ['id', 'competencyId', 'type', 'difficulty', 'intent'],
-              },
             },
-          },
-          required: ['role', 'questions'],
-        },
-      },
-    });
+        });
 
-    const text = response.text;
-    if (!text) throw new Error('No text returned from Gemini');
+        const text = response.text;
+        if (!text) throw new Error('No text returned from Gemini');
 
-    const questionPlan = JSON.parse(text);
-    return res.status(200).json(questionPlan);
-  } catch (error: any) {
-    logger.error('Handler Error', error);
-    if (error.message.includes('Authorization') || error.message.includes('Token')) {
-      return res.status(401).json({ error: error.message });
+        const questionPlan = JSON.parse(text);
+        return res.status(200).json(questionPlan);
+    } catch (error: any) {
+        logger.error('Handler Error', error);
+        if (error.message.includes('Authorization') || error.message.includes('Token')) {
+            return res.status(401).json({ error: error.message });
+        }
+        return res.status(500).json({ error: 'Internal Server Error', details: error.message });
     }
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
-  }
 }
