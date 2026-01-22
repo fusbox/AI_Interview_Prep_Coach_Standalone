@@ -257,43 +257,55 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSubmit }) => {
         </button>
     );
 
-    // --- Layout 1: Intro Card (Original Centered Layout) ---
+    // --- Layout 1: Intro Card (Original Centered Layout, Responsive) ---
     if (step.id === 'intro') {
         return (
-            <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-4 animate-fadeIn min-h-[500px]">
-                {/* Prev (Hidden but keeps spacing if needed, though intro usually has none. keeping for consistency) */}
-                {renderPrevButton()}
+            <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 animate-fadeIn min-h-[60vh] md:min-h-[500px] px-4">
+                {/* Prev (Hidden on mobile intro, visible desktop for spacing consistency) */}
+                <div className="hidden md:block">
+                    {renderPrevButton()}
+                </div>
 
                 {/* Main Content */}
-                <div className="flex-1 flex flex-col items-center justify-center relative">
+                <div className="flex-1 flex flex-col items-center justify-center relative py-8 md:py-0">
                     <motion.div
                         key="intro"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="w-full max-w-4xl flex flex-col items-center text-center"
                     >
-                        <h2 className="text-5xl md:text-6xl font-display font-bold text-zinc-200 mb-6 tracking-tight">
+                        <h2 className="text-3xl md:text-6xl font-display font-bold text-zinc-200 mb-6 tracking-tight">
                             {step.title}
                         </h2>
-                        <p className="text-xl text-cyan-400 mb-10 max-w-2xl leading-relaxed">
+                        <p className="text-lg md:text-xl text-cyan-400 mb-10 max-w-2xl leading-relaxed">
                             {step.subtitle}
                         </p>
                     </motion.div>
+
+                    {/* Mobile Start Button (Centered below text) */}
+                    <div className="md:hidden mt-4">
+                        <GlassButton
+                            onClick={goNext}
+                            className="px-8 py-3 text-lg font-bold shadow-glow-cyan animate-pulse"
+                        >
+                            Let's Go <ChevronRight className="ml-2" />
+                        </GlassButton>
+                    </div>
                 </div>
 
-                {renderNextButton()}
+                <div className="hidden md:block">
+                    {renderNextButton()}
+                </div>
             </div>
         );
     }
 
-    // --- Layout 2: Question Cards (Split 50% Page View) ---
-    // User Request: 50% of page dimension, Centered.
-    // Top Card: Title/Subtitle. Bottom Card: Content + Arrows vertically centered.
+    // --- Layout 2: Question Cards (Responsive Split View) ---
     return (
-        <div className="w-[80vw] lg:w-[60vw] h-[70vh] lg:h-[60vh] mx-auto flex flex-col animate-fadeIn">  {/* Using 60vw/60vh as a safe "50% page" approximation that is distinct */}
+        <div className="w-full lg:w-[60vw] h-auto lg:h-[60vh] min-h-[60vh] mx-auto flex flex-col animate-fadeIn relative pb-24 md:pb-0 px-4 md:px-0">
 
-            {/* Top Nested "Invisible" Card: Title & Subtitle */}
-            <div className="w-full shrink-0 flex flex-col items-center text-center mb-6">
+            {/* Top Section: Title & Subtitle (Auto Height) */}
+            <div className="w-full shrink-0 flex flex-col items-center text-center mb-6 md:mb-8 pt-4 md:pt-0">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={`title-${currentStep}`}
@@ -303,24 +315,26 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSubmit }) => {
                         transition={{ duration: 0.3 }}
                         className="w-full"
                     >
-                        <h2 className="text-4xl md:text-5xl font-display font-bold text-zinc-200 mb-2 tracking-tight">
+                        <h2 className="text-2xl md:text-5xl font-display font-bold text-zinc-200 mb-2 tracking-tight">
                             {step.title}
                         </h2>
-                        <p className="text-lg text-cyan-400 max-w-3xl mx-auto leading-relaxed">
+                        <p className="text-sm md:text-lg text-cyan-400 max-w-3xl mx-auto leading-relaxed px-2">
                             {step.subtitle}
                         </p>
                     </motion.div>
                 </AnimatePresence>
             </div>
 
-            {/* Bottom Nested "Invisible" Card: Content + Navigation */}
+            {/* Middle Section: Content + Desktop Navigation */}
             <div className="flex-1 min-h-0 flex items-center gap-4 w-full">
 
-                {/* Left Arrow (Vertically centered relative to this bottom section) */}
-                {renderPrevButton()}
+                {/* Desktop Left Arrow */}
+                <div className="hidden md:block">
+                    {renderPrevButton()}
+                </div>
 
                 {/* Scrollable Content Area */}
-                <div className="flex-1 h-full min-h-0 relative flex flex-col justify-center">
+                <div className="flex-1 h-full min-h-0 relative flex flex-col justify-start md:justify-center">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={`content-${currentStep}`}
@@ -328,10 +342,8 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSubmit }) => {
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                             transition={{ duration: 0.3 }}
-                            className="w-full h-full flex flex-col justify-center"
+                            className="w-full h-full flex flex-col justify-start md:justify-center"
                         >
-                            {/* We assume renderStepContent manages its own scrolling now, or we wrap it here */}
-                            {/* The renderStepContent already has max-h wrappers, we might need to adjust them to fit 'h-full' */}
                             <div className="w-full max-w-5xl mx-auto">
                                 {renderStepContent()}
                             </div>
@@ -339,12 +351,51 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSubmit }) => {
                     </AnimatePresence>
                 </div>
 
-                {/* Right Arrow */}
-                {renderNextButton()}
+                {/* Desktop Right Arrow */}
+                <div className="hidden md:block">
+                    {renderNextButton()}
+                </div>
             </div>
 
-            {/* Progress Bar (Optional: Putting it at the very bottom or top of everything? Keeping it minimal/hidden for now or could place it at bottom edge) */}
-            <div className="flex justify-center gap-2 mt-4 shrink-0">
+            {/* Mobile Bottom Navigation Toolbar */}
+            <div className="fixed md:hidden bottom-0 inset-x-0 p-4 bg-zinc-950/90 backdrop-blur-xl border-t border-white/10 z-50 flex justify-between items-center gap-4">
+                <button
+                    onClick={goPrev}
+                    disabled={currentStep === 0}
+                    className={`p-3 rounded-full border border-white/10 ${currentStep === 0 ? 'opacity-30' : 'active:bg-white/10 text-white'
+                        }`}
+                >
+                    <ChevronLeft size={24} />
+                </button>
+
+                {/* Step Indicator for Mobile */}
+                <div className="flex gap-1.5">
+                    {STEPS.map((_, idx) => (
+                        <div
+                            key={idx}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentStep ? 'w-6 bg-cyan-400' : 'w-1.5 bg-white/20'
+                                }`}
+                        />
+                    ))}
+                </div>
+
+                <button
+                    onClick={goNext}
+                    disabled={!canProceed()}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all ${!canProceed()
+                            ? 'bg-white/5 text-gray-500 border border-white/5'
+                            : isLastStep
+                                ? 'bg-cyan-500 text-white shadow-glow-cyan'
+                                : 'bg-white/10 text-white border border-white/20 active:bg-white/20'
+                        }`}
+                >
+                    {isLastStep ? 'Start' : 'Next'}
+                    {isLastStep ? <Play size={16} className="fill-white" /> : <ChevronRight size={20} />}
+                </button>
+            </div>
+
+            {/* Desktop Progress Bar (Hidden on Mobile) */}
+            <div className="hidden md:flex justify-center gap-2 mt-4 shrink-0">
                 {STEPS.map((_, idx) => (
                     <div
                         key={idx}
