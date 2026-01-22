@@ -10,6 +10,7 @@ interface CoachPrepScreenProps {
     isLoading: boolean;
     isSessionReady: boolean;
     onBegin: () => void;
+    onRetry?: () => void;
     role: string;
 }
 const highlightSkills = (text: string, skills: string[]): React.ReactNode => {
@@ -49,6 +50,7 @@ export const CoachPrepScreen: React.FC<CoachPrepScreenProps> = ({
     isLoading,
     isSessionReady,
     onBegin,
+    onRetry,
     role,
 }) => {
     return (
@@ -71,6 +73,53 @@ export const CoachPrepScreen: React.FC<CoachPrepScreenProps> = ({
                             Taking a Look...
                         </h2>
                     </div>
+                )}
+
+                {/* Error/Fallback State - If data fails to load */}
+                {!isLoading && !prepData && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex flex-col items-center gap-8"
+                    >
+                        <GlassCard className="p-8 text-center border-red-500/20 bg-red-500/5">
+                            <h2 className="text-xl font-bold text-white mb-2">Coach Tips Unavailable</h2>
+                            <p className="text-gray-400 mb-6">
+                                We couldn't generate your personalized prep tips right now, but your interview session is ready.
+                            </p>
+                            <div className="w-full flex flex-col gap-3">
+                                {onRetry && (
+                                    <GlassButton
+                                        onClick={onRetry}
+                                        variant="default"
+                                        className="w-full py-4 text-base font-medium border-white/20 hover:bg-white/10"
+                                    >
+                                        Try Again
+                                    </GlassButton>
+                                )}
+                                <GlassButton
+                                    onClick={onBegin}
+                                    disabled={!isSessionReady}
+                                    className={`w-full py-4 text-lg font-bold transition-all ${isSessionReady
+                                        ? 'bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-lg shadow-cyan-900/30'
+                                        : 'opacity-50 cursor-not-allowed'
+                                        }`}
+                                >
+                                    {isSessionReady ? (
+                                        <>
+                                            Begin Session
+                                            <ArrowRight className="ml-2 w-5 h-5" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                                            Preparing...
+                                        </>
+                                    )}
+                                </GlassButton>
+                            </div>
+                        </GlassCard>
+                    </motion.div>
                 )}
 
                 {/* Content */}
@@ -114,8 +163,8 @@ export const CoachPrepScreen: React.FC<CoachPrepScreenProps> = ({
                                 onClick={onBegin}
                                 disabled={!isSessionReady}
                                 className={`w-full py-4 text-lg font-bold transition-all ${isSessionReady
-                                        ? 'bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-lg shadow-cyan-900/30'
-                                        : 'opacity-50 cursor-not-allowed'
+                                    ? 'bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-lg shadow-cyan-900/30'
+                                    : 'opacity-50 cursor-not-allowed'
                                     }`}
                             >
                                 {isSessionReady ? (

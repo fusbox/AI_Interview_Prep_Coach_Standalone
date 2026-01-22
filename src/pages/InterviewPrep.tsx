@@ -77,12 +77,26 @@ export const InterviewPrep: React.FC = () => {
     navigate('/interview/session');
   };
 
+  const handleRetry = () => {
+    setIsPrepLoading(true);
+    generateCoachPrep(role, jobDescription)
+      .then((data) => {
+        setPrepData(data);
+        setIsPrepLoading(false);
+      })
+      .catch((err) => {
+        console.error('Coach prep retry failed:', err);
+        setIsPrepLoading(false);
+      });
+  };
+
   return (
     <CoachPrepScreen
       prepData={prepData}
       isLoading={isPrepLoading}
       isSessionReady={isSessionReady}
       onBegin={handleBegin}
+      onRetry={handleRetry}
       role={role}
     />
   );
