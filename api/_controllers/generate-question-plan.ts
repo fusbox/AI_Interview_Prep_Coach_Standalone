@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { validateUser } from '../utils/auth.js';
+import { GenerateQuestionPlanSchema } from '../schemas.js';
 import { logger } from '../utils/logger.js';
 
 export default async function handler(req: any, res: any) {
@@ -14,11 +15,12 @@ export default async function handler(req: any, res: any) {
             return res.status(405).json({ error: 'Method Not Allowed' });
         }
 
-        const { blueprint } = req.body || {};
-
-        if (!blueprint) {
-            return res.status(400).json({ error: 'Missing "blueprint" in request body' });
+        const parseResult = GenerateQuestionPlanSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res.status(400).json({ error: 'Invalid request', details: parseResult.error.format() });
         }
+
+        const { blueprint } = parseResult.data;
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {

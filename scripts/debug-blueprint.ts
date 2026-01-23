@@ -1,4 +1,4 @@
-import handler from '../api/generate-blueprint';
+import handler from '../api/_controllers/generate-blueprint';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -65,7 +65,7 @@ const res = {
     }
     return this;
   },
-  end: function () {},
+  end: function () { },
 };
 
 console.log('Invoking handler...');

@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { validateUser } from '../utils/auth.js';
+import { GenerateStrongResponseSchema } from '../schemas.js';
 import { logger } from '../utils/logger.js';
 
 export default async function handler(req: any, res: any) {
@@ -16,11 +17,12 @@ export default async function handler(req: any, res: any) {
             return res.status(405).json({ error: 'Method Not Allowed' });
         }
 
-        const { question, tips } = req.body || {};
-
-        if (!question || !tips) {
-            return res.status(400).json({ error: 'Missing "question" or "tips" in request body' });
+        const parseResult = GenerateStrongResponseSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res.status(400).json({ error: 'Invalid request', details: parseResult.error.format() });
         }
+
+        const { question, tips } = parseResult.data;
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {

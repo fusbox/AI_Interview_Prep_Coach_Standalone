@@ -18,7 +18,7 @@ export const InitSessionSchema = z.object({
 });
 
 // QuestionPlan schema (minimal validation for structural integrity)
-const QuestionPlanSchema = z
+export const QuestionPlanSchema = z
     .object({
         questions: z.array(
             z.object({
@@ -33,7 +33,7 @@ const QuestionPlanSchema = z
     .optional();
 
 // Blueprint schema (validating readingLevel which is used in logic)
-const BlueprintSchema = z
+export const BlueprintSchema = z
     .object({
         role: z
             .object({
@@ -67,6 +67,41 @@ const BlueprintSchema = z
     })
     .passthrough()
     .optional();
+
+export const CoachPrepSchema = z.object({
+    role: z.string().min(1, 'Role is required'),
+    jobDescription: z.string().optional(),
+});
+
+export const GenerateTipsSchema = z.object({
+    question: z.string().min(1, 'Question is required'),
+    role: z.string().min(1, 'Role is required'),
+    competency: z.any().optional(), // Flexible for now
+    intakeData: IntakeDataSchema,
+    blueprint: BlueprintSchema,
+});
+
+export const GenerateStrongResponseSchema = z.object({
+    question: z.string().min(1, 'Question is required'),
+    tips: z.object({
+        lookingFor: z.string(),
+        pointsToCover: z.array(z.string()),
+        answerFramework: z.string(),
+        industrySpecifics: z.any().optional(),
+        mistakesToAvoid: z.array(z.string()),
+        proTip: z.string(),
+    }),
+});
+
+export const GenerateBlueprintSchema = z.object({
+    role: z.string().min(1, 'Role is required'),
+    jobDescription: z.string().optional(),
+    seniority: z.string().optional(),
+});
+
+export const GenerateQuestionPlanSchema = z.object({
+    blueprint: BlueprintSchema.unwrap(), // Logic requires blueprint to be present
+});
 
 export const GenerateQuestionsSchema = z.object({
     role: z.string().min(1, 'Role is required'),
