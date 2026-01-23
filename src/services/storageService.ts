@@ -130,6 +130,20 @@ function saveToLocalStorage(session: InterviewSession, score: number): string {
 /**
  * Get all saved sessions from Supabase + LocalStorage
  */
+// Database Row Interface
+interface InterviewRow {
+  id: string;
+  user_id: string;
+  created_at: string;
+  role: string;
+  job_description?: string;
+  score: number;
+  feedback: string | object; // It can be a JSON string or an object depending on how Supabase client returns it
+}
+
+/**
+ * Get all saved sessions from Supabase + LocalStorage
+ */
 export async function getAllSessions(): Promise<SessionHistory[]> {
   try {
     const {
@@ -146,7 +160,10 @@ export async function getAllSessions(): Promise<SessionHistory[]> {
 
       if (error) throw error;
 
-      sessions = data.map((item: any) => {
+      // Cast data to known type
+      const rows = data as unknown as InterviewRow[];
+
+      sessions = rows.map((item) => {
         const sessionContent =
           typeof item.feedback === 'string' ? JSON.parse(item.feedback) : item.feedback;
 
@@ -181,10 +198,10 @@ function getLocalStorageSessions(): SessionHistory[] {
 
   // Try to decrypt (or fallback to plain JSON if legacy data exists during migration)
   const decrypted = decrypt(data);
-  if (decrypted) return decrypted;
+  if (decrypted) return decrypted as SessionHistory[];
 
   try {
-    return JSON.parse(data); // Legacy fallback
+    return JSON.parse(data) as SessionHistory[]; // Legacy fallback
   } catch {
     return [];
   }

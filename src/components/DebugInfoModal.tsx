@@ -12,6 +12,9 @@ interface DebugInfoModalProps {
 }
 
 export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose, session }) => {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const [isCopied, setIsCopied] = React.useState(false);
+
   if (!isOpen) return null;
 
   const generateMarkdownReport = () => {
@@ -208,8 +211,6 @@ export const DebugInfoModal: React.FC<DebugInfoModalProps> = ({ isOpen, onClose,
 
     return report;
   };
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const [isCopied, setIsCopied] = React.useState(false);
 
   const copyToClipboard = async () => {
     if (contentRef.current) {

@@ -1,26 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Home,
-  Briefcase,
-  LogOut,
-  User,
-  Code,
-  Hammer,
-  Sparkles,
-  Building2,
-  ShoppingBag,
-} from '../components/Icons';
+import { ShoppingBag, Code, Sparkles } from '../components/Icons';
 import Loader from '../components/Loader';
 import { TECH_ROLES, SERVICE_ROLES } from '../types';
-import { useSession } from '../hooks/useSession';
 import { useAuth } from '../context/AuthContext';
 import { useGuestTracker } from '../hooks/useGuestTracker';
 import { ROLE_IMAGES } from '../lib/constants';
 
 const RoleSelection: React.FC = () => {
   const navigate = useNavigate();
-  const { startSession } = useSession();
+  // const { startSession } = useSession();
   const { user, signOut } = useAuth();
   const { hasCompletedSession } = useGuestTracker();
   const [processingState, setProcessingState] = useState<{ isActive: boolean; text: string }>({
@@ -39,7 +28,7 @@ const RoleSelection: React.FC = () => {
   const selectRole = async (role: string) => {
     setProcessingState({ isActive: true, text: 'Preparing your interview...' });
     try {
-      // await startSession(role); // Moved to InterviewSetup
+      // Moved to InterviewSetup
       navigate('/interview', { state: { role } });
     } catch (e) {
       console.error(e);
@@ -61,7 +50,7 @@ const RoleSelection: React.FC = () => {
     title,
   }: {
     roles: string[];
-    icon: any;
+    icon: React.ElementType;
     title: string;
   }) => (
     <div className="mb-12">

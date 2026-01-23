@@ -1,5 +1,9 @@
 import { supabase } from './supabase';
 
+interface TtsResponse {
+  audioBase64?: string;
+}
+
 export async function synthesizeQuestion(text: string): Promise<string> {
   const {
     data: { session },
@@ -21,8 +25,8 @@ export async function synthesizeQuestion(text: string): Promise<string> {
       `TTS request failed: ${resp.status} ${resp.statusText} ${details ?? ''}`.trim()
     );
   }
-  const data = await resp.json().catch(() => ({}));
-  const base64 = (data as any).audioBase64 as string | undefined;
+  const data = (await resp.json().catch(() => ({}))) as TtsResponse;
+  const base64 = data.audioBase64;
   if (!base64) {
     throw new Error('TTS response missing audioBase64');
   }

@@ -15,7 +15,7 @@ import { generateCoachPrep, CoachPrepData } from '../services/geminiService';
 export const InterviewSetup: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { resetSession, isLoading } = useSessionContext();
+  const { resetSession } = useSessionContext();
   const [jobDescription, setJobDescription] = useState('');
   // Initialize role from navigation state if available
   const [role, setRole] = useState(location.state?.role || '');
@@ -82,7 +82,7 @@ export const InterviewSetup: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto pb-40 lg:pb-12 flex flex-col gap-8 h-auto lg:h-[calc(100vh-100px)]">
+    <div className="max-w-7xl mx-auto pb-40 lg:pb-12 flex flex-col gap-8 h-auto lg:min-h-[calc(100vh-100px)]">
       <div className="shrink-0 text-center pt-8 lg:pt-0">
         <h1 className="text-3xl font-bold mb-2">Interview Setup</h1>
         <p className="text-gray-400">
@@ -91,7 +91,7 @@ export const InterviewSetup: React.FC = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:min-h-0">
+      <div className="lg:flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left: Custom JD Input (Mobile: Fixed Height, Desktop: Full Height) */}
         <div className="flex flex-col gap-4 h-[600px] lg:h-full lg:min-h-0">
           <div className="px-1 shrink-0">
@@ -137,9 +137,9 @@ export const InterviewSetup: React.FC = () => {
         </div>
 
         {/* Right: Stacked Role Selection & Resume (Mobile: Auto Height, Desktop: Full Height) */}
-        <div className="flex flex-col gap-8 h-auto lg:h-full lg:min-h-0">
+        <div className="flex flex-col gap-8 h-auto lg:h-full">
           {/* Top Right: Standard Role */}
-          <div className="lg:flex-1 flex flex-col gap-4 lg:min-h-0">
+          <div className="lg:flex-1 flex flex-col gap-4">
             <div className="px-1 shrink-0">
               <h2 className="text-xl font-display font-semibold text-cyan-400">
                 Choose a Standard Role
@@ -148,7 +148,7 @@ export const InterviewSetup: React.FC = () => {
                 Quickly start practicing with one of our pre-configured industry roles.
               </p>
             </div>
-            <GlassCard className="flex-1 border-t-4 border-t-cyan-500 flex flex-col justify-center p-6 lg:p-6 min-h-[250px] lg:min-h-0">
+            <GlassCard className="flex-1 border-t-4 border-t-cyan-500 flex flex-col justify-center p-6 lg:p-6 min-h-[250px]">
               <h3 className="text-lg font-bold mb-4">Select a Role</h3>
               <div className="space-y-6">
                 <p className="text-sm text-gray-400">

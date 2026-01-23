@@ -2,73 +2,85 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { validateUser } from './utils/auth.js';
 import { AnalyzeAnswerSchema } from './schemas.js';
 import { logger } from './utils/logger.js';
+import { ApiRequest, ApiResponse } from './types.js';
 
-export default async function handler(req: any, res: any) {
-    // CORS Preflight
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+export default async function handler(req: ApiRequest, res: ApiResponse) {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  try {
+    // 1. Auth Validation
+    await validateUser(req);
+
+    // 2. Input Validation
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
+    const parseResult = AnalyzeAnswerSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid request body', details: parseResult.error.format() });
+    }
+
+    const { question, input, blueprint, intakeData } = parseResult.data;
+
+    // 3. Payload Size Check
+    // Limit base64 payload to prevent memory abuse (approx 10MB)
+    const MAX_PAYLOAD_SIZE = 10 * 1024 * 1024;
+
+    // Type check for the input object to safely access .data property
+    const hasLargeData =
+      typeof input !== 'string' &&
+      input &&
+      typeof input === 'object' &&
+      'data' in input &&
+      typeof (input as { data: string }).data === 'string' &&
+      (input as { data: string }).data.length > MAX_PAYLOAD_SIZE;
+
+    if (hasLargeData) {
+      const size = (input as { data: string }).data.length; // Safe due to check above
+      logger.warn(`Blocked large payload: ${size} bytes`);
+      return res.status(413).json({ error: 'Payload Too Large' });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      logger.error('Server Error: GEMINI_API_KEY is missing');
+      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+
     try {
-        // 1. Auth Validation
-        await validateUser(req);
+      let contentParts = [];
 
-        // 2. Input Validation
-        if (req.method !== 'POST') {
-            return res.status(405).json({ error: 'Method Not Allowed' });
-        }
+      // Context Construction
+      let contextContext = '';
+      let scoringModelContext = '';
+      const questionContext = `Question: "${question}"`;
 
-        const parseResult = AnalyzeAnswerSchema.safeParse(req.body);
-        if (!parseResult.success) {
-            return res
-                .status(400)
-                .json({ error: 'Invalid request body', details: parseResult.error.format() });
-        }
-
-        const { question, input, blueprint, questionId, intakeData } = parseResult.data;
-
-        // 3. Payload Size Check
-        // Limit base64 payload to prevent memory abuse (approx 10MB)
-        const MAX_PAYLOAD_SIZE = 10 * 1024 * 1024;
-        if (typeof input !== 'string' && input.data && input.data.length > MAX_PAYLOAD_SIZE) {
-            logger.warn(`Blocked large payload: ${input.data.length} bytes`);
-            return res.status(413).json({ error: 'Payload Too Large' });
-        }
-
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            logger.error('Server Error: GEMINI_API_KEY is missing');
-            return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
-        }
-
-        const ai = new GoogleGenAI({ apiKey });
-
-        try {
-            let contentParts = [];
-
-            // Context Construction
-            let contextContext = '';
-            let scoringModelContext = '';
-            let questionContext = `Question: "${question}"`;
-
-            if (blueprint) {
-                // Enhanced Context
-                contextContext = `
+      if (blueprint) {
+        // Enhanced Context
+        contextContext = `
 BLUEPRINT CONTEXT:
 Job Role: ${blueprint.role?.title || 'Unknown Role'}
 Competencies: ${JSON.stringify(blueprint.competencies?.map((c) => ({ id: c.id, name: c.name, definition: c.definition })))}
 `;
-                if (blueprint.scoringModel) {
-                    scoringModelContext = `
+        if (blueprint.scoringModel) {
+          scoringModelContext = `
 SCORING MODEL:
 Dimensions: ${JSON.stringify(blueprint.scoringModel.dimensions)}
 Ratings Bands: ${JSON.stringify(blueprint.scoringModel.ratingBands)}
 `;
-                }
-            }
+        }
+      }
 
-            const readingLevelContext = blueprint?.readingLevel
-                ? `
+      const readingLevelContext = blueprint?.readingLevel
+        ? `
     READING LEVEL (Mode: ${blueprint.readingLevel.mode}):
     - STRICT CONSTRAINT: Simplify ALL output.
     - Max ${blueprint.readingLevel.maxSentenceWords} words/sentence.
@@ -83,21 +95,21 @@ Ratings Bands: ${JSON.stringify(blueprint.scoringModel.ratingBands)}
     4. "dimensionScores" notes
     5. "missingElements" (Be plain and direct)
         `
-                : blueprint
-                    ? `
+        : blueprint
+          ? `
     IMPORTANT: Adapt the reading level of your feedback to the target candidate profile for a ${blueprint.role?.title || 'candidate'}.
     - If the role is entry-level: STRICTLY use a 6th-7th grade reading level. Max 15 words/sentence. No big words.
     - If the role is senior: Use professional but clear language.
     - When in doubt: Prioritize simplicity.
         `
-                    : '';
+          : '';
 
-            // Confidence / Struggle Context
-            let struggleContext = '';
+      // Confidence / Struggle Context
+      let struggleContext = '';
 
-            if (intakeData?.biggestStruggle) {
-                const s = intakeData.biggestStruggle;
-                struggleContext = `
+      if (intakeData?.biggestStruggle) {
+        const s = intakeData.biggestStruggle;
+        struggleContext = `
     CUSTOM FOCUS (User Struggle: "${s}"):
     - The user specifically wants help with: ${s}.
     - ${s === 'getting_started' ? 'Focus feedback on: How quickly they got to the point. Did they hesitate?' : ''}
@@ -110,25 +122,25 @@ Ratings Bands: ${JSON.stringify(blueprint.scoringModel.ratingBands)}
     
     ACTION: Ensure the "biggestUpgrade" and "coachReaction" specifically address this struggle if relevant.
                 `;
-            }
+      }
 
-            // Challenge Level Context
-            let challengeContext = '';
-            if (intakeData?.challengeLevel) {
-                const level = intakeData.challengeLevel;
-                challengeContext = `
+      // Challenge Level Context
+      let challengeContext = '';
+      if (intakeData?.challengeLevel) {
+        const level = intakeData.challengeLevel;
+        challengeContext = `
     GRADING STRINGENCY (Level: ${level}):
     - ${level === 'warm_up' ? 'Be encouraging. Overlook minor flaws. Focus on confidence.' : ''}
     - ${level === 'realistic' ? 'Fair professional standard. Flag obvious gaps.' : ''}
     - ${level === 'challenge' ? "RUTHLESS CRITIQUE. High bar for 'Strong'. Nitpick missing nuances. Assume they are applying for a Senior/Staff role." : ''}
                 `;
-            }
+      }
 
-            // Primary Goal Context
-            let goalContext = '';
-            if (intakeData?.primaryGoal) {
-                const goal = intakeData.primaryGoal;
-                goalContext = `
+      // Primary Goal Context
+      let goalContext = '';
+      if (intakeData?.primaryGoal) {
+        const goal = intakeData.primaryGoal;
+        goalContext = `
     GOAL-DRIVEN FEEDBACK FOCUS (Goal: ${goal}):
     - ${goal === 'build_confidence' ? 'Be extra encouraging. Highlight strengths. Gentle on critique.' : ''}
     - ${goal === 'get_more_structured' ? 'Focus feedback on: Logical flow and organization. Did they use a framework (STAR, etc.)?' : ''}
@@ -138,22 +150,22 @@ Ratings Bands: ${JSON.stringify(blueprint.scoringModel.ratingBands)}
     - ${goal === 'role_specific_depth' ? 'Focus feedback on: Technical accuracy and domain expertise for the role.' : ''}
     - ${goal === 'practice_hard_questions' ? 'High bar. Expect nuanced, sophisticated answers. Flag any superficiality.' : ''}
                 `;
-            }
+      }
 
-            // Interview Stage Context
-            let stageContext = '';
-            if (intakeData?.stage) {
-                const stage = intakeData.stage;
-                stageContext = `
+      // Interview Stage Context
+      let stageContext = '';
+      if (intakeData?.stage) {
+        const stage = intakeData.stage;
+        stageContext = `
     INTERVIEW STAGE LENS (Stage: ${stage}):
     - ${stage === 'recruiter_screen' ? 'Evaluate for: basic fit, communication clarity, and culture alignment. Be encouraging.' : ''}
     - ${stage === 'hiring_manager' ? 'Evaluate for: role-specific competence, problem-solving, and team fit. Higher bar for technical depth.' : ''}
     - ${stage === 'panel' ? 'Evaluate for: handling multiple perspectives, cross-functional awareness, and collaboration skills.' : ''}
     - ${stage === 'final_round' ? 'Evaluate for: executive presence, strategic thinking, leadership potential, and culture add. Highest bar.' : ''}
                 `;
-            }
+      }
 
-            const commonPromptInstructions = `
+      const commonPromptInstructions = `
 
 ${struggleContext}
 ${challengeContext}
@@ -194,70 +206,70 @@ ${scoringModelContext}
 ${readingLevelContext}
         `;
 
-            const schema = {
+      const schema = {
+        type: Type.OBJECT,
+        properties: {
+          transcript: { type: Type.STRING },
+          feedback: { type: Type.ARRAY, items: { type: Type.STRING } },
+          deliveryStatus: { type: Type.STRING, nullable: true },
+          deliveryTips: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+          keyTerms: { type: Type.ARRAY, items: { type: Type.STRING } },
+          rating: { type: Type.STRING },
+          answerScore: { type: Type.NUMBER },
+          dimensionScores: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                dimensionId: {
+                  type: Type.STRING,
+                  description: 'Must match ID from Scoring Model. Omit if irrelevant.',
+                },
+                score: { type: Type.NUMBER },
+                note: { type: Type.STRING },
+              },
+            },
+          },
+          evidenceExtracts: { type: Type.ARRAY, items: { type: Type.STRING } },
+          missingElements: { type: Type.ARRAY, items: { type: Type.STRING } },
+          biggestUpgrade: { type: Type.STRING },
+          redoPrompt: { type: Type.STRING },
+
+          coachReaction: { type: Type.STRING },
+          strongResponse: { type: Type.STRING },
+          whyThisWorks: {
+            type: Type.OBJECT,
+            properties: {
+              lookingFor: { type: Type.STRING },
+              pointsToCover: { type: Type.ARRAY, items: { type: Type.STRING } },
+              answerFramework: { type: Type.STRING },
+              industrySpecifics: {
                 type: Type.OBJECT,
                 properties: {
-                    transcript: { type: Type.STRING },
-                    feedback: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    deliveryStatus: { type: Type.STRING, nullable: true },
-                    deliveryTips: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
-                    keyTerms: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    rating: { type: Type.STRING },
-                    answerScore: { type: Type.NUMBER },
-                    dimensionScores: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                dimensionId: {
-                                    type: Type.STRING,
-                                    description: 'Must match ID from Scoring Model. Omit if irrelevant.',
-                                },
-                                score: { type: Type.NUMBER },
-                                note: { type: Type.STRING },
-                            },
-                        },
-                    },
-                    evidenceExtracts: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    missingElements: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    biggestUpgrade: { type: Type.STRING },
-                    redoPrompt: { type: Type.STRING },
-
-                    coachReaction: { type: Type.STRING },
-                    strongResponse: { type: Type.STRING },
-                    whyThisWorks: {
-                        type: Type.OBJECT,
-                        properties: {
-                            lookingFor: { type: Type.STRING },
-                            pointsToCover: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            answerFramework: { type: Type.STRING },
-                            industrySpecifics: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    metrics: { type: Type.STRING },
-                                    tools: { type: Type.STRING },
-                                },
-                            },
-                            mistakesToAvoid: { type: Type.ARRAY, items: { type: Type.STRING } },
-                            proTip: { type: Type.STRING },
-                        },
-                    },
+                  metrics: { type: Type.STRING },
+                  tools: { type: Type.STRING },
                 },
-                required: [
-                    'transcript',
-                    'feedback',
-                    'rating',
-                    'coachReaction',
-                    'strongResponse',
-                    'whyThisWorks',
-                ],
-            };
+              },
+              mistakesToAvoid: { type: Type.ARRAY, items: { type: Type.STRING } },
+              proTip: { type: Type.STRING },
+            },
+          },
+        },
+        required: [
+          'transcript',
+          'feedback',
+          'rating',
+          'coachReaction',
+          'strongResponse',
+          'whyThisWorks',
+        ],
+      };
 
-            if (typeof input === 'string') {
-                // Text Input Analysis
-                contentParts = [
-                    {
-                        text: `You are a supportive interview coach.
+      if (typeof input === 'string') {
+        // Text Input Analysis
+        contentParts = [
+          {
+            text: `You are a supportive interview coach.
           ${questionContext}
           User's Text Answer: "${input}"
           
@@ -266,13 +278,13 @@ ${readingLevelContext}
           ${commonPromptInstructions}
           (Skip delivery analysis for text interactions).
 `,
-                    },
-                ];
-            } else if (input.data && input.mimeType) {
-                // Audio Input Analysis
-                contentParts = [
-                    {
-                        text: `You are a supportive interview coach.
+          },
+        ];
+      } else if (input.data && input.mimeType) {
+        // Audio Input Analysis
+        contentParts = [
+          {
+            text: `You are a supportive interview coach.
           ${questionContext}
 
           Task:
@@ -283,42 +295,45 @@ ${readingLevelContext}
              - "deliveryTips": 2 specific tips.
              - Context: Voice-only interaction.
           `,
-                    },
-                    {
-                        inlineData: {
-                            mimeType: input.mimeType || 'audio/webm',
-                            data: input.data,
-                        },
-                    },
-                ];
-            } else {
-                return res.status(400).json({ error: 'Invalid input format' });
-            }
+          },
+          {
+            inlineData: {
+              mimeType: input.mimeType || 'audio/webm',
+              data: input.data,
+            },
+          },
+        ];
+      } else {
+        return res.status(400).json({ error: 'Invalid input format' });
+      }
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: { parts: contentParts },
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: schema,
-                },
-            });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: { parts: contentParts },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: schema,
+        },
+      });
 
-            const text = response.text;
-            if (!text) throw new Error('No text returned from analysis');
+      const text = response.text;
+      if (!text) throw new Error('No text returned from analysis');
 
-            const result = JSON.parse(text);
-            return res.status(200).json(result);
-        } catch (error: any) {
-            logger.error('Error analyzing answer', error);
-            return res.status(500).json({ error: 'Failed to analyze answer', details: error.message });
-        }
-    } catch (error: any) {
-        logger.error('Handler Error', error);
-        // Return 401 if it's an Auth error, otherwise 500
-        if (error.message.includes('Authorization') || error.message.includes('Token')) {
-            return res.status(401).json({ error: error.message });
-        }
-        return res.status(500).json({ error: 'Internal Server Error' });
+      const result = JSON.parse(text);
+      return res.status(200).json(result);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error('Error analyzing answer', error);
+      return res.status(500).json({ error: 'Failed to analyze answer', details: errorMessage });
     }
+  } catch (error: unknown) {
+    logger.error('Handler Error', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Return 401 if it's an Auth error, otherwise 500
+    if (errorMessage.includes('Authorization') || errorMessage.includes('Token')) {
+      return res.status(401).json({ error: errorMessage });
+    }
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
 }

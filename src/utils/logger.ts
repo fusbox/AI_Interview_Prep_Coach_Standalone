@@ -4,12 +4,17 @@ interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
-  context?: Record<string, any>;
-  error?: any;
+  context?: Record<string, unknown>;
+  error?: unknown;
 }
 
 class Logger {
-  private log(level: LogLevel, message: string, context?: Record<string, any>, error?: any) {
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, unknown>,
+    error?: unknown
+  ) {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -39,19 +44,19 @@ class Logger {
     }
   }
 
-  info(message: string, context?: Record<string, any>) {
+  info(message: string, context?: Record<string, unknown>) {
     this.log('info', message, context);
   }
 
-  warn(message: string, context?: Record<string, any>, error?: any) {
+  warn(message: string, context?: Record<string, unknown>, error?: unknown) {
     this.log('warn', message, context, error);
   }
 
-  error(message: string, error?: any, context?: Record<string, any>) {
+  error(message: string, error?: unknown, context?: Record<string, unknown>) {
     this.log('error', message, context, error);
   }
 
-  debug(message: string, context?: Record<string, any>) {
+  debug(message: string, context?: Record<string, unknown>) {
     // Ideally usage of debug logs is controlled by an env var or log level setting
     if (import.meta.env.DEV) {
       this.log('debug', message, context);

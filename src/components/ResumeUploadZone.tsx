@@ -9,6 +9,29 @@ export const ResumeUploadZone: React.FC = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const validateAndSetFile = (file: File) => {
+    setError(null);
+    setUploadSuccess(false);
+
+    // Check file type (PDF or DOCX)
+    const validTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    if (!validTypes.includes(file.type)) {
+      setError('Please upload a PDF or DOCX file.');
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be less than 5MB.');
+      return;
+    }
+
+    setFile(file);
+  };
+
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -33,29 +56,6 @@ export const ResumeUploadZone: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       validateAndSetFile(e.target.files[0]);
     }
-  };
-
-  const validateAndSetFile = (file: File) => {
-    setError(null);
-    setUploadSuccess(false);
-
-    // Check file type (PDF or DOCX)
-    const validTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-    if (!validTypes.includes(file.type)) {
-      setError('Please upload a PDF or DOCX file.');
-      return;
-    }
-
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB.');
-      return;
-    }
-
-    setFile(file);
   };
 
   const handleUpload = async () => {

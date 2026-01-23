@@ -28,7 +28,7 @@ const SectionHeader = ({
   onToggle,
 }: {
   id: string;
-  icon: any;
+  icon: React.ElementType;
   title: string;
   color: string;
   isExpanded: boolean;
@@ -109,6 +109,12 @@ const SectionHeader = ({
 };
 
 const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
+  const [expandedSection, setExpandedSection] = useState<string | null>('lookingFor');
+
+  const toggleSection = (section: string) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
+
   if (!tips)
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[200px] text-center p-6 space-y-4">
@@ -125,12 +131,6 @@ const GlassTips: React.FC<GlassTipsProps> = ({ tips, className }) => {
         </div>
       </div>
     );
-
-  const [expandedSection, setExpandedSection] = useState<string | null>('lookingFor');
-
-  const toggleSection = (section: string) => {
-    setExpandedSection((prev) => (prev === section ? null : section));
-  };
 
   const decodeHtml = (html: string) => {
     const txt = document.createElement('textarea');

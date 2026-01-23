@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Home, Mail, Lock, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { GlassCard } from '../components/ui/glass/GlassCard';
 import { GlassButton } from '../components/ui/glass/GlassButton';
-import { GlassTooltip } from '../components/ui/glass/GlassTooltip';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -34,8 +33,12 @@ const Auth: React.FC = () => {
         if (error) throw error;
         navigate('/dashboard');
       }
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }

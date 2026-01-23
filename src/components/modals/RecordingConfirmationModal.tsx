@@ -1,6 +1,5 @@
 import React from 'react';
 import { GlassCard } from '../ui/glass/GlassCard';
-import { GlassButton } from '../ui/glass/GlassButton';
 
 interface RecordingConfirmationModalProps {
   isOpen: boolean;

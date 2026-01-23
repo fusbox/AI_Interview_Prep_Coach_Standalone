@@ -3,37 +3,41 @@ import { validateUser } from '../utils/auth.js';
 import { GenerateStrongResponseSchema } from '../schemas.js';
 import { logger } from '../utils/logger.js';
 
-export default async function handler(req: any, res: any) {
-    // CORS Preflight
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+import { ApiRequest, ApiResponse } from '../types.js';
+
+export default async function handler(req: ApiRequest, res: ApiResponse) {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  try {
+    // 0. Auth Validation
+    await validateUser(req);
+
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    try {
-        // 0. Auth Validation
-        await validateUser(req);
+    const parseResult = GenerateStrongResponseSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid request', details: parseResult.error.format() });
+    }
 
-        if (req.method !== 'POST') {
-            return res.status(405).json({ error: 'Method Not Allowed' });
-        }
+    const { question, tips } = parseResult.data;
 
-        const parseResult = GenerateStrongResponseSchema.safeParse(req.body);
-        if (!parseResult.success) {
-            return res.status(400).json({ error: 'Invalid request', details: parseResult.error.format() });
-        }
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      logger.error('Server Error: GEMINI_API_KEY is missing');
+      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+    }
 
-        const { question, tips } = parseResult.data;
+    const ai = new GoogleGenAI({ apiKey });
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            logger.error('Server Error: GEMINI_API_KEY is missing');
-            return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
-        }
-
-        const ai = new GoogleGenAI({ apiKey });
-
-        // Helper to format tips for the prompt
-        let tipsContext = `
+    // Helper to format tips for the prompt
+    const tipsContext = `
         Use the following coaching tips as the standard for your analysis and generation:
         - What they're looking for: "${tips.lookingFor}"
         - Points to cover: ${JSON.stringify(tips.pointsToCover)}
@@ -43,10 +47,10 @@ export default async function handler(req: any, res: any) {
         - Pro tip: "${tips.proTip}"
         `;
 
-        try {
-            const contentParts = [
-                {
-                    text: `You are an expert interview coach.
+    try {
+      const contentParts = [
+        {
+          text: `You are an expert interview coach.
           Interview Question: "${question}".
           
           ${tipsContext}
@@ -58,61 +62,63 @@ export default async function handler(req: any, res: any) {
           2. GENERATE "WHY THIS WORKS": Explain why your generated strong response is effective by mapping it back to the specific categories in the coaching tips.
              - Fill out a structure IDENTICAL to the input tips, but the content should be your explanation of how the strong response meets that criteria.
           `,
-                },
-            ];
+        },
+      ];
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: { parts: contentParts },
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            strongResponse: { type: Type.STRING },
-                            whyThisWorks: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    lookingFor: { type: Type.STRING },
-                                    pointsToCover: { type: Type.ARRAY, items: { type: Type.STRING } },
-                                    answerFramework: { type: Type.STRING },
-                                    industrySpecifics: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            metrics: { type: Type.STRING },
-                                            tools: { type: Type.STRING },
-                                        },
-                                    },
-                                    mistakesToAvoid: { type: Type.ARRAY, items: { type: Type.STRING } },
-                                    proTip: { type: Type.STRING },
-                                },
-                            },
-                        },
-                        required: ['strongResponse', 'whyThisWorks'],
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: { parts: contentParts },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              strongResponse: { type: Type.STRING },
+              whyThisWorks: {
+                type: Type.OBJECT,
+                properties: {
+                  lookingFor: { type: Type.STRING },
+                  pointsToCover: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  answerFramework: { type: Type.STRING },
+                  industrySpecifics: {
+                    type: Type.OBJECT,
+                    properties: {
+                      metrics: { type: Type.STRING },
+                      tools: { type: Type.STRING },
                     },
+                  },
+                  mistakesToAvoid: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  proTip: { type: Type.STRING },
                 },
-            });
+              },
+            },
+            required: ['strongResponse', 'whyThisWorks'],
+          },
+        },
+      });
 
-            const text = response.text;
-            if (!text) throw new Error('No text returned from strong response generation');
+      const text = response.text;
+      if (!text) throw new Error('No text returned from strong response generation');
 
-            const result = JSON.parse(text);
-            return res.status(200).json(result);
-        } catch (error: any) {
-            logger.error('Error generating strong response', error);
-            if (error.message.includes('Authorization') || error.message.includes('Token')) {
-                return res.status(401).json({ error: error.message });
-            }
-            return res
-                .status(500)
-                .json({ error: 'Failed to generate strong response', details: error.message });
-        }
-    } catch (error: any) {
-        // Catch block for errors from validateUser or other top-level operations
-        logger.error('Handler error', error);
-        if (error.message.includes('Authorization') || error.message.includes('Token')) {
-            return res.status(401).json({ error: error.message });
-        }
-        return res.status(500).json({ error: 'Internal Server Error', details: error.message });
+      const result = JSON.parse(text);
+      return res.status(200).json(result);
+    } catch (error: unknown) {
+      logger.error('Error generating strong response', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Authorization') || errorMessage.includes('Token')) {
+        return res.status(401).json({ error: errorMessage });
+      }
+      return res
+        .status(500)
+        .json({ error: 'Failed to generate strong response', details: errorMessage });
     }
+  } catch (error: unknown) {
+    // Catch block for errors from validateUser or other top-level operations
+    logger.error('Handler error', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('Authorization') || errorMessage.includes('Token')) {
+      return res.status(401).json({ error: errorMessage });
+    }
+    return res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
+  }
 }

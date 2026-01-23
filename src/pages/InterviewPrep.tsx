@@ -68,10 +68,10 @@ export const InterviewPrep: React.FC = () => {
 
   // Also check if session is already ready (from context)
   useEffect(() => {
-    if (session.status === 'ACTIVE' && session.questions.length > 0) {
+    if (session.status === 'ACTIVE' && session.questions.length > 0 && !isSessionReady) {
       setIsSessionReady(true);
     }
-  }, [session]);
+  }, [session, isSessionReady]);
 
   const handleBegin = () => {
     navigate('/interview/session');

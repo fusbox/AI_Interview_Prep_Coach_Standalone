@@ -13,6 +13,7 @@ import {
   Question,
   QuestionTips,
   CompetencyBlueprint,
+  QuestionPlanItem,
 } from '../types';
 import {
   generateQuestions,
@@ -217,7 +218,7 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         if (questionPlan && questionPlan.questions.length > 1) {
           const placeholders = questionPlan.questions.slice(1).map(
-            (p: any, idx: number) =>
+            (p: QuestionPlanItem, idx: number) =>
               ({
                 id: `pending-${idx + 1}`,
                 text: 'Analyzing job requirements...',
@@ -250,7 +251,9 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
 
         // 3. Background Fetch for Remaining Questions
         if (questionPlan && questionPlan.questions.length > 1) {
-          const remainingIndices = questionPlan.questions.map((_: any, i: number) => i).slice(1);
+          const remainingIndices = questionPlan.questions
+            .map((_: unknown, i: number) => i)
+            .slice(1);
           console.log('Fetching remaining questions in background...', remainingIndices);
 
           generateQuestions(

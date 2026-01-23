@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { SessionContext } from '../context/SessionContext';
-import { useAuth } from '../context/AuthContext';
 import {
   Mic,
   MessageSquare,
@@ -9,7 +8,6 @@ import {
   CheckCircle2,
   List,
   Lightbulb,
-  Play,
   ArrowRight,
   Volume2,
   RotateCcw,
@@ -50,16 +48,7 @@ export const InterviewSession: React.FC = () => {
     throw new Error('InterviewSession must be used within a SessionProvider');
   }
 
-  const {
-    session,
-    nextQuestion,
-    goToQuestion,
-    saveAnswer,
-    loadTipsForQuestion,
-    clearAnswer,
-    audioUrls,
-    cacheAudioUrl,
-  } = sessionCtx;
+  const { session, goToQuestion, saveAnswer, loadTipsForQuestion, clearAnswer } = sessionCtx;
   const { questions, currentQuestionIndex, answers } = session;
   const currentQuestion = questions?.[currentQuestionIndex];
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
@@ -482,18 +471,6 @@ export const InterviewSession: React.FC = () => {
     setTextAnswer('');
   };
 
-  const handleNext = () => {
-    if (playbackAudio) {
-      setPlayingUrl(null);
-      playbackAudio.pause();
-    }
-    // Do NOT clear transcript to preserve history
-    // Do NOT clear transcript to preserve history
-    nextQuestion();
-    // Reset popover visibility for next question (though next question typically starts with no answer)
-    setShowAnswerPopover(false);
-  };
-
   const handleFinish = async () => {
     await sessionCtx.finishSession();
     navigate('/review');
@@ -559,7 +536,7 @@ export const InterviewSession: React.FC = () => {
     return (
       <div className="h-dvh flex flex-col text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
         {/* Force Loader if no question data yet */}
-        <SessionLoader isLoading={true} onTransitionComplete={() => { }} />
+        <SessionLoader isLoading={true} onTransitionComplete={() => {}} />
       </div>
     );
   }
@@ -732,7 +709,9 @@ export const InterviewSession: React.FC = () => {
                           <button
                             onClick={() => togglePlayback(questionAudioUrl, false)}
                             className="flex items-center gap-2 text-xs text-cyan-400/80 hover:text-cyan-300 transition-colors uppercase font-medium tracking-wider"
-                            aria-label={playingUrl === questionAudioUrl ? 'Stop reading' : 'Read question'}
+                            aria-label={
+                              playingUrl === questionAudioUrl ? 'Stop reading' : 'Read question'
+                            }
                           >
                             {playingUrl === questionAudioUrl ? (
                               <>
@@ -881,7 +860,9 @@ export const InterviewSession: React.FC = () => {
                             <button
                               onClick={handleToggleRecording}
                               disabled={isInitializing}
-                              aria-label={isInitializing ? 'Connecting microphone' : 'Toggle Recording'}
+                              aria-label={
+                                isInitializing ? 'Connecting microphone' : 'Toggle Recording'
+                              }
                               className={cn(
                                 'group relative w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_0_40px_rgba(6,182,212,0.2)]',
                                 isInitializing
@@ -900,7 +881,10 @@ export const InterviewSession: React.FC = () => {
                                 )}
                               />
                               {isInitializing ? (
-                                <Loader2 size={32} className="relative z-10 md:w-10 md:h-10 animate-spin" />
+                                <Loader2
+                                  size={32}
+                                  className="relative z-10 md:w-10 md:h-10 animate-spin"
+                                />
                               ) : (
                                 <Mic
                                   size={32}
@@ -1130,23 +1114,22 @@ export const InterviewSession: React.FC = () => {
             </div>
           </footer>
         </>
-      )
-      }
+      )}
 
       <MultiStepLoader
         loadingStates={
           mode === 'voice'
             ? [
-              { text: 'Coach is analyzing your answer...' },
-              { text: 'Generating feedback...' },
-              { text: 'Noting your speaking delivery...' },
-              { text: 'Finalizing review...' },
-            ]
+                { text: 'Coach is analyzing your answer...' },
+                { text: 'Generating feedback...' },
+                { text: 'Noting your speaking delivery...' },
+                { text: 'Finalizing review...' },
+              ]
             : [
-              { text: 'Coach is analyzing your answer...' },
-              { text: 'Generating feedback...' },
-              { text: 'Finalizing review...' },
-            ]
+                { text: 'Coach is analyzing your answer...' },
+                { text: 'Generating feedback...' },
+                { text: 'Finalizing review...' },
+              ]
         }
         loading={showLoader}
         duration={mode === 'voice' ? 3000 : 4000}
@@ -1168,10 +1151,10 @@ export const InterviewSession: React.FC = () => {
           currentQuestion
             ? answers[currentQuestion.id]
               ? {
-                text: answers[currentQuestion.id].text || '',
-                audioBlob: answers[currentQuestion.id].audioBlob,
-                analysis: answers[currentQuestion.id].analysis,
-              }
+                  text: answers[currentQuestion.id].text || '',
+                  audioBlob: answers[currentQuestion.id].audioBlob,
+                  analysis: answers[currentQuestion.id].analysis,
+                }
               : { text: '', analysis: null }
             : { text: '', analysis: null }
         }
@@ -1198,6 +1181,6 @@ export const InterviewSession: React.FC = () => {
         isSessionComplete={allQuestionsAnswered}
         onFinish={handleFinish}
       />
-    </div >
+    </div>
   );
 };

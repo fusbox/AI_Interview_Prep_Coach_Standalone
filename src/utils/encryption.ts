@@ -23,12 +23,12 @@ export const getStorageKey = (): string => {
   return key;
 };
 
-export const encrypt = (data: any): string => {
+export const encrypt = (data: unknown): string => {
   const key = getStorageKey();
   return CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
 };
 
-export const decrypt = (ciphertext: string): any => {
+export const decrypt = (ciphertext: string): unknown => {
   try {
     // 1. Try decrypting with the current local secure key
     const key = getStorageKey();
@@ -69,9 +69,9 @@ export const secureStorage = {
   getItem: <T>(key: string): T | null => {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-    return decrypt(raw);
+    return decrypt(raw) as T;
   },
-  setItem: (key: string, value: any) => {
+  setItem: (key: string, value: unknown) => {
     const ciphertext = encrypt(value);
     localStorage.setItem(key, ciphertext);
   },

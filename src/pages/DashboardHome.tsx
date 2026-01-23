@@ -5,14 +5,12 @@ import {
   Mic,
   TrendingUp,
   Clock,
-  ArrowRight,
   Loader2,
   Trash2,
   Download,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   getAllSessions,
   SessionHistory,
@@ -23,7 +21,6 @@ import { ReviewQuestionItem } from '../components/ui/glass/ReviewQuestionItem';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export const DashboardHome: React.FC = () => {
-  const navigate = useNavigate();
   const [sessions, setSessions] = useState<SessionHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
@@ -31,17 +28,17 @@ export const DashboardHome: React.FC = () => {
   const toggleSession = (id: string) => {
     setExpandedSessionId((prev) => (prev === id ? null : id));
   };
-
   useEffect(() => {
+    const fetchSessions = async () => {
+      // Loading is true by default, so we don't need to set it true initially
+      // setLoading(true);
+      const data = await getAllSessions();
+      setSessions(data);
+      setLoading(false);
+    };
+
     fetchSessions();
   }, []);
-
-  const fetchSessions = async () => {
-    setLoading(true);
-    const data = await getAllSessions();
-    setSessions(data);
-    setLoading(false);
-  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -73,9 +70,6 @@ export const DashboardHome: React.FC = () => {
     totalSessions > 0
       ? Math.round(sessions.reduce((acc, s) => acc + s.score, 0) / totalSessions)
       : 0;
-
-  // Simple trend calculation (mock for now, real later)
-  const trend = totalSessions > 0 ? '+100%' : '0%';
 
   const stats = [
     {
@@ -228,7 +222,7 @@ export const DashboardHome: React.FC = () => {
                                     }}
                                     index={idx}
                                     isExpanded={true}
-                                    onToggle={() => { }}
+                                    onToggle={() => {}}
                                     blueprint={session.session.blueprint}
                                     hideExpandIcon={true}
                                   />

@@ -65,7 +65,7 @@ const res = {
     }
     return this;
   },
-  end: function () { },
+  end: function () {},
 };
 
 console.log('Invoking handler...');

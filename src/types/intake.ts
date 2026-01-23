@@ -98,10 +98,10 @@ export const DEFAULT_ONBOARDING_INTAKE_V1: OnboardingIntakeV1 = {
   mustPracticeQuestions: [],
 };
 
-export function validateOnboardingIntakeV1(input: any): OnboardingIntakeV1 {
+export function validateOnboardingIntakeV1(input: unknown): OnboardingIntakeV1 {
   const safe: OnboardingIntakeV1 = {
     ...DEFAULT_ONBOARDING_INTAKE_V1,
-    ...(input ?? {}),
+    ...((input as Partial<OnboardingIntakeV1>) ?? {}),
   };
 
   if (![1, 2, 3, 4, 5].includes(safe.confidenceScore)) {

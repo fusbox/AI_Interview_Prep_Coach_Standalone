@@ -6,7 +6,7 @@ const AUDIT_STORAGE_KEY = 'ai_audit_logs_local';
 export interface AuditEvent {
   id?: string;
   action: string;
-  details?: any;
+  details?: unknown;
   timestamp: number;
   userId?: string; // If authenticated
 }
@@ -16,7 +16,7 @@ export interface AuditEvent {
  * - Authenticated: Persists to Supabase `audit_logs` table (immutable).
  * - Guest: Persists to encrypted LocalStorage (best effort).
  */
-export async function logAuditEvent(action: string, details?: any) {
+export async function logAuditEvent(action: string, details?: unknown) {
   try {
     const {
       data: { user },
@@ -42,7 +42,7 @@ export async function logAuditEvent(action: string, details?: any) {
   }
 }
 
-function logToLocalStorage(action: string, details?: any) {
+function logToLocalStorage(action: string, details?: unknown) {
   try {
     const existingData = localStorage.getItem(AUDIT_STORAGE_KEY);
     let logs: AuditEvent[] = [];
@@ -50,7 +50,7 @@ function logToLocalStorage(action: string, details?: any) {
     if (existingData) {
       const decrypted = decrypt(existingData);
       if (Array.isArray(decrypted)) {
-        logs = decrypted;
+        logs = decrypted as AuditEvent[];
       }
     }
 
@@ -75,6 +75,14 @@ function logToLocalStorage(action: string, details?: any) {
   }
 }
 
+interface AuditRow {
+  id: string;
+  action: string;
+  details: string | object | null;
+  created_at: string;
+  user_id: string;
+}
+
 /**
  * Retrieve audit logs (Admin/User export purpose)
  */
@@ -93,7 +101,10 @@ export async function getAuditLogs(): Promise<AuditEvent[]> {
 
       if (error) throw error;
 
-      return data.map((item: any) => ({
+      // Cast to known row type
+      const rows = data as unknown as AuditRow[];
+
+      return rows.map((item) => ({
         id: item.id,
         action: item.action,
         details: item.details,
@@ -106,7 +117,7 @@ export async function getAuditLogs(): Promise<AuditEvent[]> {
     const existingData = localStorage.getItem(AUDIT_STORAGE_KEY);
     if (existingData) {
       const result = decrypt(existingData);
-      return Array.isArray(result) ? result : [];
+      return Array.isArray(result) ? (result as AuditEvent[]) : [];
     }
     return [];
   } catch (error) {

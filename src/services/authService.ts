@@ -1,10 +1,10 @@
 import { supabase } from './supabase';
-import { AuthError, Session } from '@supabase/supabase-js';
+import { AuthError, Session, User } from '@supabase/supabase-js';
 
 export interface AuthResponse {
   data:
     | {
-        user: any;
+        user: User | null;
         session: Session | null;
       }
     | {

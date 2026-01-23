@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GlassCard } from './ui/glass/GlassCard';
 import { GlassButton } from './ui/glass/GlassButton';
 import { GlassTextarea } from './ui/glass/GlassTextarea';
 import { GlassRadioGroup } from './ui/glass/GlassRadioGroup';
@@ -132,7 +131,7 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSubmit }) => {
           </div>
         );
 
-      case 'confidence':
+      case 'confidence': {
         // Explicitly sized thumb (20px) for precise alignment
         const percent = ((formData.confidenceScore - 1) / 4) * 100;
         return (
@@ -169,6 +168,7 @@ export const IntakeForm: React.FC<IntakeFormProps> = ({ onSubmit }) => {
             </div>
           </div>
         );
+      }
 
       case 'struggle':
         return (
